@@ -1,4 +1,4 @@
-# Your project name here
+# Web-Based Inventory Management System for Small Business 
 
 ## Information about this repository
 
