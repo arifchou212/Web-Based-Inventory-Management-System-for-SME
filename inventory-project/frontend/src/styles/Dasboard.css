@@ -1,0 +1,105 @@
+/* Admin Dashboard Layout */
+.admin-dashboard {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-direction: row;
+  height: 100vh;
+}
+
+
+/* Main Content Area Styling */
+.dashboard-content {
+  margin-left: 220px;  
+  padding: 20px;
+  background-color: #f9f9f9;
+  flex: 1;  
+  overflow-y: auto;  
+  z-index: 1;  
+  margin-top: 60px;  
+}
+
+/* Heading */
+.dashboard-content h1 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #333;
+  z-index: 5;  
+  position: relative;
+}
+
+/* Section Styling */
+.dashboard-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-section h2 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #444;
+}
+
+/* Low-Stock Alerts */
+.dashboard-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.dashboard-section ul li {
+  background: #fff3f3;
+  padding: 10px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  color: #d32f2f;
+  font-size: 14px;
+}
+
+/* Inventory Summary */
+.summary-cards {
+  display: flex;
+  gap: 20px;
+}
+
+.summary-card {
+  background: #f4f4f4;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  flex: 1;
+}
+
+.summary-card h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+.summary-card p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Charts */
+.chart-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Recent Activity */
+.dashboard-section ul li {
+  background: #e3f2fd;
+  padding: 10px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  color: #1976d2;
+  font-size: 14px;
+}
