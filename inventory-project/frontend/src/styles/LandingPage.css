@@ -1,0 +1,217 @@
+/* Root Variables (Optional) */
+:root {
+  --bg-dark: #1A1A2E;
+  --bg-darker: #161628;
+  --accent-gold: #C9A66B;
+  --text-light: #EAEAEA;
+  --text-muted: #BFBFBF;
+}
+
+/* Overall Container */
+.landing-container {
+  background: var(--bg-dark);
+  color: var(--text-light);
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hero Section */
+.hero-section {
+  position: relative;
+  background: url("https://via.placeholder.com/1600x900/000/555?text=Dark+Lux+Background")
+    no-repeat center center/cover;
+  height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-overlay {
+  background-color: rgba(0, 0, 0, 0.4); /* Dark overlay */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-content {
+  text-align: center;
+  max-width: 700px;
+  padding: 2rem;
+}
+
+.hero-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: var(--text-light);
+  margin-bottom: 2rem;
+}
+
+.hero-buttons .btn {
+  margin: 0 0.5rem;
+}
+
+.btn-primary-hero {
+  background-color: var(--accent-gold);
+  color: #000;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+.btn-primary-hero:hover {
+  background-color: #b08e58;
+}
+
+.btn-outline-hero {
+  background: transparent;
+  border: 2px solid var(--accent-gold);
+  color: var(--accent-gold);
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 30px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+.btn-outline-hero:hover {
+  background-color: var(--accent-gold);
+  color: #000;
+}
+
+/* Features Section */
+.features-section {
+  padding: 4rem 2rem;
+  background: var(--bg-darker);
+  text-align: center;
+}
+.section-header {
+  margin-bottom: 3rem;
+}
+.section-title {
+  color: var(--accent-gold);
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.section-subtitle {
+  color: var(--text-muted);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.feature-card {
+  background: #212139;
+  border-radius: 8px;
+  padding: 2rem;
+  transition: transform 0.2s ease;
+  border: 1px solid #2e2e48;
+}
+.feature-card h3 {
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+}
+.feature-card p {
+  color: var(--text-muted);
+}
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Info Section */
+.info-section {
+  padding: 4rem 2rem;
+  background: var(--bg-dark);
+}
+.info-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2rem;
+}
+.info-text {
+  flex: 1 1 400px;
+}
+.info-text h2 {
+  color: var(--accent-gold);
+  margin-bottom: 1rem;
+}
+.info-text p {
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+.btn.btn-primary-info {
+  background-color: var(--accent-gold);
+  color: #000;
+  padding: 0.75rem 2rem;
+  border-radius: 30px;
+  text-decoration: none;
+  transition: background 0.3s;
+}
+.btn-primary-info:hover {
+  background-color: #b08e58;
+}
+.info-image img {
+  width: 100%;
+  max-width: 550px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+/* Footer */
+.landing-footer {
+  background: var(--bg-darker);
+  padding: 1.5rem 0;
+  text-align: center;
+}
+.footer-text {
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+.footer-links {
+  margin: 0.5rem 0;
+}
+.footer-link {
+  color: var(--accent-gold);
+  margin: 0 0.75rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.footer-link:hover {
+  color: #b08e58;
+  text-decoration: underline;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .info-content {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+  .info-text,
+  .info-image {
+    flex: 1 1 auto;
+  }
+}
