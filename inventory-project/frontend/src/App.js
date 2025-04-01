@@ -9,9 +9,10 @@ import AdminDashboard from "./pages/AdminDashboard";
 import InventoryPage from "./pages/InventoryPage";
 import ManageUsersPage from "./pages/ManageUsersPage";
 import SettingsPage from "./pages/SettingsPage";
-import ReportsPage from "./pages/ReportsPage";
+import ReportsPage from "./pages/ReportsAnalytics";
 import AuthPage from "./pages/AuthPage";
 import LandingPage from "./pages/LandingPage";
+import { ThemeProvider } from "./context/ThemeContext";
 
 function AppContent() {
   const location = useLocation();
@@ -54,10 +55,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </ThemeProvider>
   );
 }
-
 export default App;
