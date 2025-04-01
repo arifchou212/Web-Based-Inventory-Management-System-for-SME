@@ -1,0 +1,381 @@
+:root {
+  --primary: #2A9D8F;
+  --primary-dark: #264653;
+  --accent: #E9C46A;
+  --error: #E76F51;
+  --background: #1A1A2E;
+  --card-bg: #16213E;
+  --text: #EAEAEA;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px); 
+  background: linear-gradient(135deg, var(--background) 0%, #0F3460 100%);
+  padding: 2rem;
+  margin-top: 60px; 
+  position: relative;
+}
+
+.auth-box {
+  width: 90%;
+  max-width: 1100px;
+  height: 600px;
+  background: var(--card-bg);
+  border-radius: 90px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  position: relative;
+  overflow: hidden;
+}
+
+.form-container {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: all 0.6s ease-in-out;
+  gap: 15px;
+  
+}
+
+.left-side { transform: translateX(0); }
+.right-side { transform: translateX(100%); }
+
+
+
+h2 {
+  color: var(--text);
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+  font-weight: bolder;
+  text-align: center;
+}
+
+.name-fields {
+  display: flex;
+  gap: 10px; 
+  width: 100%;
+}
+
+.name-fields input {
+  flex: 1; 
+}
+
+.password-group {
+  display: flex;
+  gap: 10px; 
+  width: 100%;
+}
+
+.password-field {
+  position: relative; 
+  width: 100%;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 30px; 
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px; 
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-secondary);
+  color: #888;
+  z-index: 1;
+}
+
+.toggle-text {
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.toggle-text:hover {
+  color: #8e9497;
+}
+
+.input-group {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  
+}
+
+input:focus {
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.1);
+}
+
+input.error {
+  border-color: var(--error);
+}
+
+.error-message {
+  color: var(--error);
+  font-size: 0.9rem;
+  position: absolute;
+  bottom: -1.2rem;
+  left: 0;
+}
+
+.primary-btn {
+  background: var(--primary);
+  color: white;
+  padding: 1rem;
+  border-radius: 90px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: inline-block;
+  border: none;
+  text-align: center;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: #228075;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(42,157,143,0.3);
+}
+
+.google-btn {
+  background: rgb(36, 35, 35);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 90px;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.google-btn:hover{
+  background: #0d0d0e;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(42,157,143,0.3);
+}
+
+.google-btn img {
+  width: 24px;
+  height: 24px;
+}
+
+.cover-panel {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(45deg, var(--primary-dark) 0%, var(--primary) 100%);
+  transition: all 0.4s ease-in-out;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+ 
+}
+
+.auth-box.login-mode .cover-panel { left: 0; }
+
+.cover-content {
+  padding: 2rem;
+  max-width: 80%;
+}
+
+.outline-btn {
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  margin-top: 1.5rem;
+  padding: 1rem 2rem;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.outline-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+.forgot-password {
+  cursor: pointer; 
+  transition: color 0.3s ease;
+}
+
+.forgot-password:hover {
+  color: #8e9497;
+}
+
+.login-extra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem; 
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9998; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The modal content */
+.modal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+
+.modal h3 {
+  margin-bottom: 10px;
+}
+
+.modal input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+}
+
+.modal button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.modal button:hover {
+  background: #0056b3;
+}
+
+/* Error Banner */
+.error-banner {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--error);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  animation: slideUp 0.3s ease, fadeOut 0.5s ease 4.5s forwards; 
+  z-index: 1000;
+}
+
+.email-verification-message {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffcc00;
+  color: black;
+  padding: 12px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  z-index: 1000;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  animation: fadeOut 10s forwards;
+}
+
+@keyframes slideUp {
+  from { bottom: -100px; }
+  to { bottom: 2rem; }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+
+/* Container for the indicator */
+.password-strength {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap; 
+}
+
+.strength-bar {
+  height: 4px;
+  flex-grow: 1;
+  border-radius: 2px;
+  background: #444; 
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* The text that shows Weak, Medium, Strong, or No Password */
+.strength-text {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  color: #ccc; /* default text color */
+}
+
+/* If password is empty, grey bar, width = 0 */
+.strength-bar.empty {
+  background: #666;
+  width: 0;
+}
+
+/* Weak = red-ish, show about 33% width */
+.strength-bar.weak {
+  background: #E76F51; 
+  width: 33%;
+}
+
+/* Medium = yellow-ish, show about 66% width */
+.strength-bar.medium {
+  background: #E9C46A;
+  width: 66%;
+}
+
+/* Strong = green-ish, full width */
+.strength-bar.strong {
+  background: #2A9D8F;
+  width: 100%;
+}
