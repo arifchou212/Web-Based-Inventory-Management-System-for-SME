@@ -1,0 +1,123 @@
+/*  Manage Users Page */
+.manage-users {
+    padding: 20px;
+    margin-left: 220px; 
+    margin-top: 60px; 
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5; 
+    min-height: calc(100vh - 60px);
+  }
+  
+  /*  Header */
+  h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  /*  Users Table */
+  .users-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white; 
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .users-table th, 
+  .users-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    color: black;
+  }
+  
+  .users-table th {
+    background-color: #007bff;
+    color: white;
+    text-transform: uppercase;
+  }
+  
+  .users-table tr:nth-child(even) {
+    background-color: #f9f9f9; 
+  }
+  
+  .users-table tr:hover {
+    background-color: #f1f1f1;
+  }
+  
+  /* 🔹 Status Styling */
+  .status-pending {
+    color: orange;
+    font-weight: bold;
+  }
+  
+  .status-active {
+    color: green;
+    font-weight: bold;
+  }
+  
+  /*  Buttons */
+  .btn-approve, .btn-promote, .btn-remove {
+    padding: 8px 12px;
+    margin: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Adds spacing between icon & text */
+    border-radius: 5px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    font-weight: bold;
+  }
+  
+  /*  Approve Button */
+  .btn-approve {
+    background-color: #28a745;
+    color: white;
+  }
+  .btn-approve:hover {
+    background-color: #1e7e34 !important;
+    box-shadow: 0px 4px 6px rgba(40, 167, 69, 0.3);
+  }
+  
+  /*  Promote Button */
+  .btn-promote {
+    background-color: #ffc107;
+    color: black;
+  }
+  .btn-promote:hover {
+    background-color: #e0a800 !important;
+    box-shadow: 0px 4px 6px rgba(255, 193, 7, 0.3);
+  }
+  
+  /*  Remove Button */
+  .btn-remove {
+    background-color: #dc3545;
+    color: white;
+  }
+  .btn-remove:hover {
+    background-color: #c82333 !important;
+    box-shadow: 0px 4px 6px rgba(220, 53, 69, 0.3);
+  }
+  
+  /*  Responsive Adjustments */
+  @media (max-width: 768px) {
+    .manage-users {
+      margin-left: 0;
+      padding: 10px;
+    }
+  
+    .users-table th, .users-table td {
+      padding: 8px;
+      font-size: 14px;
+    }
+  
+    .btn-approve, .btn-promote, .btn-remove {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+  }
