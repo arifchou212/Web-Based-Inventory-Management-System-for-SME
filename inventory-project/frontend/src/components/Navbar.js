@@ -4,70 +4,70 @@ import { getAuth, signOut } from "firebase/auth";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 
-function Navbar({ lowStockProducts = [] }) {
-  const [showNotifications, setShowNotifications] = useState(false);
+// Helper function to capitalize the first letter of a string
+const capitalizeFirstLetter = (string) => {
+  if (!string) return "";
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, setUser } = useAuth();
   const auth = getAuth();
 
-  // Hide navbar updates on landing and auth pages
-  const isDashboardPage = !["/", "/auth"].includes(location.pathname);
+  // Determine if we are on a dashboard page 
+  const hidePaths = ["/", "/auth"];
+  const isDashboardPage = !hidePaths.includes(location.pathname);
 
   useEffect(() => {
     console.log("Navbar re-rendered. User:", user);
   }, [user]);
 
+  // Sign-out handler: clear user-specific data from localStorage and update state.
   const handleLogout = async () => {
     try {
       await signOut(auth);
       setUser(null);
+      localStorage.removeItem("token");
+      localStorage.removeItem("uid");
+      localStorage.removeItem("role");
+      localStorage.removeItem("company");
+      localStorage.removeItem("fullname");
       navigate("/"); // Redirect to landing page
     } catch (error) {
       console.error("Logout failed:", error.message);
     }
   };
 
+
+  const storedCompany = user ? localStorage.getItem("company") : null;
+  const brandName = storedCompany ? capitalizeFirstLetter(storedCompany) : "Inventory System";
+
+  // Function to get the appropriate dashboard route based on role.
+  const getDashboardRoute = () => {
+    const role = localStorage.getItem("role");
+    if (role === "admin" || role === "manager") {
+      return "/admin-dashboard";
+    } else if (role) {
+      return "/dashboard";
+    }
+    return "/";
+  };
+
+  // Set the brand link destination: if user is logged in, go to dashboard; otherwise, landing page.
+  const brandLink = user ? getDashboardRoute() : "/";
+
   return (
     <nav className="dashboard-navbar">
-      <Link className="navbar-brand" to="/">
-        Inventory System
+      <Link className="navbar-brand" to={brandLink}>
+        {brandName}
       </Link>
 
       {user && isDashboardPage && (
         <div className="nav-right">
-          {/* Notification Bell */}
           <div className="notification-container">
-            <div
-              className="notification-bell"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              🔔{" "}
-              {lowStockProducts.length > 0 && (
-                <span className="badge">{lowStockProducts.length}</span>
-              )}
-            </div>
-
-            {/* Notification Dropdown */}
-            {showNotifications && (
-              <div className="notification-dropdown">
-                <h4>Low Stock Alerts</h4>
-                {lowStockProducts.length > 0 ? (
-                  <ul>
-                    {lowStockProducts.map((product) => (
-                      <li key={product.id}>
-                        {product.name} - Stock: {product.stock}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No low-stock products.</p>
-                )}
-              </div>
-            )}
           </div>
-
-          {/* Sign Out Button */}
           <button className="btn logout-btn" onClick={handleLogout}>
             Sign Out
           </button>
