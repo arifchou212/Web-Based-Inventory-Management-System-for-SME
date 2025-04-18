@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import "../styles/LandingPage.css";
 
+
 const LandingPage = () => {
   return (
     <div className="landing-container">
-      {/* Optional Reusable Navbar */}
+      {/* Navbar */}
       <Navbar />
 
       {/* Hero Section */}
@@ -42,64 +43,94 @@ const LandingPage = () => {
         <div className="features-grid">
           <div className="feature-card">
             <h3>Real-Time Tracking</h3>
-            <p>
-              Stay informed on live stock changes and never miss a critical update.
-            </p>
+            <p>Monitor live changes in inventory, including additions and sales.</p>
           </div>
           <div className="feature-card">
             <h3>Role-Based Control</h3>
-            <p>
-              Assign Admin, Manager, or Employee roles with tailored permissions.
-            </p>
+            <p>Admin, Manager, and Employee roles with controlled access levels.</p>
           </div>
           <div className="feature-card">
             <h3>Bulk CSV Uploads</h3>
-            <p>
-              Effortlessly import thousands of items at once with built-in validation.
-            </p>
+            <p>Upload large inventories in one go with data validation checks.</p>
           </div>
           <div className="feature-card">
             <h3>Data Security</h3>
-            <p>
-              Safeguard your data with encryption, optional 2FA, and precise user logs.
-            </p>
+            <p>Authentication via Firebase, ensuring secure and authorized access.</p>
           </div>
           <div className="feature-card">
             <h3>Custom Alerts</h3>
-            <p>
-              Get notified for low stock, expiry dates, or custom triggers.
-            </p>
+            <p>Notifications for low stock or critical updates.</p>
           </div>
           <div className="feature-card">
             <h3>Analytics & Reports</h3>
-            <p>
-              Generate insight-driven analytics to forecast demand and optimize inventory.
-            </p>
+            <p>Generate reports on inventory actions and sales trends.</p>
+          </div>
+          <div className="feature-card">
+            <h3>Interactive Dashboard</h3>
+            <p>Access all key features from one easy-to-use interface.</p>
+          </div>
+          <div className="feature-card">
+            <h3>User Activity Logs</h3>
+            <p>Track user actions for clear accountability and record-keeping.</p>
+          </div>
+          <div className="feature-card">
+            <h3>User-Friendly Interface</h3>
+            <p>Navigate and manage your inventory effortlessly with a clean and intuitive UI.</p>
           </div>
         </div>
       </section>
 
       {/* Info / CTA Section */}
       <section className="info-section">
-        <div className="info-content">
-          <div className="info-text">
-            <h2>Why Choose Our System?</h2>
-            <p>
-              Enjoy real-time data, secure role-based access, 
-              and advanced analytics under one unified, 
-              easy-to-use dashboard.
-            </p>
-            <Link to="/auth" className="btn btn-primary-info">
-              Get Started
-            </Link>
+      <div className="info-content">
+        <div className="info-text">
+          <h2>Why Choose Our System?</h2>
+          <p>
+            Managing your inventory doesn't have to be complicated. 
+            Our system combines simplicity, efficiency, and security to 
+            help you take control of your business with ease.
+          </p>
+          <div className="why-choose-list">
+            <div className="why-choose-item">
+              <span>🚀</span>
+              <p><strong>Stay in Control:</strong> Real-time updates keep you aware of stock levels and changes.</p>
+            </div>
+            <div className="why-choose-item">
+              <span>🔒</span>
+              <p><strong>Secure and Reliable:</strong> Role-based access ensures data integrity and protection.</p>
+            </div>
+            <div className="why-choose-item">
+              <span>📊</span>
+              <p><strong>Make Informed Decisions:</strong> Generate reports and analyze trends to optimize inventory.</p>
+            </div>
+            <div className="why-choose-item">
+              <span>📁</span>
+              <p><strong>Fast Data Entry:</strong> Bulk CSV uploads save time and reduce errors.</p>
+            </div>
+            <div className="why-choose-item">
+              <span>📂</span>
+              <p><strong>Easy Data Export:</strong> Download reports in CSV, Excel, or PDF format to share and analyze.</p>
+            </div>
+            <div className="why-choose-item">
+              <span>📝</span>
+              <p><strong>Clear Accountability:</strong> User activity logs help track changes and maintain records.</p>
+            </div>
+            <div className="why-choose-item">
+              <span>💡</span>
+              <p><strong>Simple and Intuitive:</strong> Designed for small businesses with a user-friendly interface.</p>
+            </div>
+          </div>
+          <Link to="/auth" className="btn btn-primary-info">
+            Get Started
+          </Link>
           </div>
           <div className="info-image">
             <img
-              src="https://via.placeholder.com/550x350/111/aaa?text=Inventory+Snapshot"
+              src="\images\image.png"
               alt="Inventory Snapshot"
             />
           </div>
-        </div>
+      </div>
       </section>
 
       {/* Footer */}
