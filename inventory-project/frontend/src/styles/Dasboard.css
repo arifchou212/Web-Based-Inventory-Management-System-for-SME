@@ -1,10 +1,9 @@
 :root {
-  --primary-color: #2C3E50;       /* Dark Navy/Slate */
-  --accent-color: #C9A66B;        /* Golden Accent */
-  --background-color: #F9F7F1;    /* Light Beige */
-  --card-background: #ffffff;     /* White Card BG */
-  --text-color: #333333;          /* Dark Text */
-  --border-color: #E0E0E0;        /* Light Border */
+  --primary-color: #2C3E50;       /* Dark navy */
+  --accent-color: #C9A66B;        /* Gold accent (less used now) */
+  --background-color: #F9F7F1;    /* Light beige page background */
+  --text-color: #333333;          /* Dark text */
+  --border-color: #E0E0E0;        /* Light border */
   --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 
   --border-radius: 8px;
@@ -12,252 +11,446 @@
   --spacing-md: 20px;
   --spacing-lg: 30px;
 
-  --header-height: 60px;
-  --sidebar-width: 220px;
+  /* Specific colors for add, remove,  */
+  --btn-add-bg: #2ECC71;    /* Green for add */
+  --btn-add-text: #ffffff;
+  --btn-remove-bg: #E74C3C; /* Red for remove */
+  --btn-remove-text: #ffffff;
+  --price-increase-color: #E74C3C; /* Red for increase */
+  --price-decrease-color: #27AE60; /* Green for decrease */
+
+  /* Additional typical colors for other actions */
+  --btn-csv-bg: #3498DB;    /* Blue for CSV */
+  --btn-edit-bg: #F39C12;   /* Orange for Edit */
+  --btn-view-bg: #bdc3c7;   /* Light grey for View */
 }
 
-/* Main Layout */
-.admin-dashboard {
-  display: flex;
-  height: 100vh;
-  background-color: #F9F7F1;
-  font-family: "Poppins", sans-serif; /* Example font */
-}
-
-.dashboard-content {
-  flex: 1;
-  margin-left: var(--sidebar-width);
-  margin-top: var(--header-height);
+/* Container for entire inventory page */
+.inventory-page {
+  margin-top: 60px;         /* If navbar is 60px high */
+  margin-left: 220px;       /* If sidebar is 220px wide */
+  background: #F9F7F1;
+  min-height: calc(100vh - 60px);
   padding: var(--spacing-md);
-  overflow-y: auto;
-  background-color: #F9F7F1;
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header */
-.dashboard-header {
-  text-align: center;
+/* Header (Title, Search, Refresh) */
+.inventory-header {
+  position: relative;
   margin-bottom: var(--spacing-md);
 }
 
-.dashboard-header h1 {
+/* Center the H1 */
+.inventory-header h1 {
+  text-align: center;
+  color: var(--primary-color);
   font-size: 2.5rem;
-  font-weight: bold;      
+  font-weight: bold;
   letter-spacing: 1px;
   margin: 0 0 var(--spacing-sm) 0;
-  color: #2C3E50;
   text-align: center;
   border-bottom: 4px solid var(--accent-color);
   padding-bottom: var(--spacing-sm);
 }
 
-.dashboard-header p {
-  margin-top: 5px;
-  font-size: 0.95rem;
-  color: #333333;
+/* Search bar (aligned right, smaller width) */
+.search-bar {
+  position: absolute;
+  top: 90px;
+  right: 0;
+  display: block;
 }
 
-/* KPI Container */
-.kpi-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.kpi-box {
-  background-color: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  padding: var(--spacing-md);
-  text-align: center;
-  transition: transform 0.2s ease;
-}
-.kpi-box:hover {
-  transform: translateY(-2px);
-}
-.kpi-box h4 {
-  margin: 0 0 5px 0;
-  font-size: 1rem;
-  color: #2C3E50;
-}
-.kpi-box p {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: var(--accent-color);
-}
-
-/* Two Column Row */
-.dashboard-two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.dashboard-left,
-.dashboard-right {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-/* Common Section styling */
-.dashboard-section {
-  background: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: var(--shadow);
-  padding: var(--spacing-md);
-}
-
-.dashboard-section h2 {
-  font-size: 1.4rem;
-  margin-top: 0;
-  margin-bottom: var(--spacing-sm);
-  color: #2C3E50;
-  border-bottom: 2px solid #D4AF37;
-  padding-bottom: var(--spacing-sm);
-}
-
-/* Inventory Summary */
-.inventory-summary .summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-}
-.inventory-summary .summary-card {
-  background: #f4f4f4;
-  border-radius: 6px;
-  padding: var(--spacing-sm);
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-  transition: box-shadow 0.2s ease;
-}
-.inventory-summary .summary-card:hover {
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-.inventory-summary .summary-card h3 {
-  font-size: 1rem;
-  margin: 0 0 5px;
-  color: #2C3E50;
-}
-.inventory-summary .summary-card p {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #D4AF37;
-}
-
-/* Chart Sections:
-   We fix heights so both line chart & pie chart 
-   have the same approximate size
-*/
-.chart-section .chart-container {
+/* Container to position icon inside the input */
+.search-input-container {
   position: relative;
-  height: 400px; /* Adjust as you see fit */
-  margin-top: var(--spacing-sm);
-  background: var(--card-background);
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  padding: var(--spacing-md);
-}
-.chart-section canvas {
-  width: 100% !important;
-  height: 100% !important; /* Fill the container height */
+  display: inline-block;
 }
 
-/* Notifications / Tasks */
-.notifications-section ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-.notifications-section li {
-  background: #fff8e1;
-  border-left: 4px solid #D4AF37;
-  padding: var(--spacing-sm);
-  border-radius: 4px;
-  margin-bottom: var(--spacing-sm);
-  transition: background-color 0.2s ease;
+/* Actual search input */
+.search-bar input {
+  width: 220px;
+  padding: 8px 35px 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 120px;
+  font-size: 0.9rem;
   color: #333333;
-}
-.notifications-section li:hover {
-  background-color: #fff3c0;
-}
-
-/* Low Stock Alerts */
-.low-stock-list ul {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-.low-stock-list li {
-  background-color: #ffe5e5;
-  border-left: 4px solid #e74c3c;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  color: #333333;
-}
-.low-stock-list li:hover {
-  background-color: #fed7d7;
+  background: #fff;
+  transition: border 0.2s ease-in-out;
 }
 
-/* Show More Buttons */
-.show-more-btn-container {
+.search-bar input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+/* Magnifying glass icon inside input */
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+/* Container for the filters and buttons */
+.filters-controls-wrapper {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 45px; /* Space below the search bar */
+  padding: 0 10px;
 }
-.show-more-btn {
-  background-color: #2C3E50;
-  color: #fff;
+
+/* Inventory filters (category select) */
+.inventory-filters {
+  margin-bottom: var(--spacing-md);
+  display: inline-block;  /* Shrinks to fit content */
+  width: fit-content;     /* Adapts to the size of the select button */
+}
+
+.inventory-filters select {
+  padding: 8px;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: #333333;
+  outline: none;
+}
+
+.inventory-filters select:focus {
+  border-color: var(--primary-color);
+}
+
+
+/* Inventory Table Container */
+.inventory-table {
+  /* Use same background as page instead of a card */
+  background: #F9F7F1;
+  box-shadow: none;
+  padding: var(--spacing-md) 0;
+  border-radius: 8px;
+}
+
+/* Table controls: Add, Delete, CSV, etc. on the right side */
+.table-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+/* Buttons: typical color usage */
+.table-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  padding: 6px 12px;
   border: none;
-  padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.show-more-btn:hover {
-  background-color: #1B2B3F;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s ease, background-color 0.3s ease;
 }
 
-/* Recent Activity */
-.recent-activity-list {
-  margin-top: 20px;
+/* Add => Green */
+.btn-add {
+  background-color: var(--btn-add-bg); /* #2ECC71 */
+  color: var(--btn-add-text);         /* #fff */
 }
-.recent-activity-list ul {
-  list-style: none;
-  padding: 0;
+.btn-add:hover {
+  background-color: #27ae60;
+  transform: translateY(-2px);
 }
-.recent-activity-list li {
-  background-color: #e3f2fd;
-  border-left: 4px solid #3498db;
+
+/* Delete => Red */
+.btn-delete {
+  background-color: var(--btn-remove-bg); /* #E74C3C */
+  color: #fff;
+}
+.btn-delete:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* CSV => Blue (#3498DB) */
+.btn-csv {
+  background-color: var(--btn-csv-bg);
+  color: #fff;
+}
+.btn-csv:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+/* If you want a second delete button for "Delete Selected"? */
+.btn-delete-selected {
+  background-color: var(--btn-remove-bg);
+  color: #fff;
+}
+.btn-delete-selected:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* Table styling (thead = primary color with white text) */
+.inventory-table table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/* Table Header => Dark navy with white text */
+.inventory-table thead tr {
+  background-color: var(--primary-color);
+}
+
+.inventory-table th {
+  color: #fff !important;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
   padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  color: #333333;
-}
-.recent-activity-list li:hover {
-  background-color: #d2eafc;
+  text-align: center;
 }
 
-/* Loading */
-.loading {
+.inventory-table td {
+  padding: var(--spacing-sm);
   text-align: center;
-  font-size: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
   color: #333333;
+}
+
+/* White & grey alternating row backgrounds */
+.inventory-table tbody tr:nth-child(odd) {
+  background: #fff;
+}
+.inventory-table tbody tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+/* Hover effect on table body rows */
+.inventory-table tbody tr:hover {
+  background: #ecf0f1;
+}
+
+/* Price Increase/Decrease colors */
+.price-increase {
+  color: #E74C3C !important; /* #E74C3C (red) */
+  font-weight: bold;
+}
+.price-decrease {
+  color: #27AE60 !important; /* #27AE60 (green) */
+  font-weight: bold;
+}
+
+/* Table action buttons: 
+   - View => grey
+   - Edit => orange
+   - Remove => red border
+*/
+.btn-view,
+.btn-edit,
+.btn-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+  margin-right: 4px;
+}
+
+/* View => light grey background, navy text */
+.btn-view {
+  background-color: var(--btn-view-bg); /* #bdc3c7 */
+  color: var(--primary-color);
+  border: none;
+}
+.btn-view:hover {
+  background-color: #a8b0b3;
+  transform: translateY(-2px);
+}
+
+/* Edit => Orange background, white text */
+.btn-edit {
+  background-color: var(--btn-edit-bg); /* #F39C12 */
+  color: #fff;
+  border: none;
+}
+.btn-edit:hover {
+  background-color: #d7890d;
+  transform: translateY(-2px);
+}
+
+/* Remove => Red border, no fill */
+.btn-remove {
+  background: none;
+  color: var(--btn-remove-bg); /* #E74C3C */
+  border: 1px solid var(--btn-remove-bg);
+}
+.btn-remove:hover {
+  background-color: #f9e2e2;
+  transform: translateY(-2px);
+}
+
+/* Overlays / Popups */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inventory-form-popup,
+.csv-upload-popup,
+.detail-popup {
+  background: #fff;
+  width: 600px;
+  max-width: 600px;
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  position: relative;
+  color: black;
+}
+.csv-upload-popup input {
+  color: black;
+}
+
+/* Close button in popup */
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  color: var(--primary-color);
+  cursor: pointer;
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+}
+
+.inventory-form-popup h2,
+.csv-upload-popup h2,
+.detail-popup h2 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-sm);
+  text-align: center;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 5px;
+}
+
+.inventory-form-popup form label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 0.9rem;
+}
+
+.inventory-form-popup form input,
+.inventory-form-popup form textarea,
+.inventory-form-popup form select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: black;
+  font-size: 0.9rem;
+}
+
+.inventory-form-popup form input:focus,
+.inventory-form-popup form textarea:focus,
+.inventory-form-popup form select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
   margin-top: var(--spacing-md);
 }
 
-/* Responsive: stack columns on narrower screens */
-@media (max-width: 992px) {
-  .dashboard-two-col {
-    grid-template-columns: 1fr;
+/* Example primary button for form submission => green (add) */
+.btn-primary {
+  background-color: var(--btn-add-bg);
+  color: var(--btn-add-text);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.btn-primary:hover {
+  background-color: #27ae60;
+  transform: translateY(-2px);
+}
+
+/* Secondary => grey */
+.btn-secondary {
+  background-color: #bdc3c7;
+  color: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.btn-secondary:hover {
+  background-color: #a8b0b3;
+  transform: translateY(-2px);
+}
+
+/* CSV error messages */
+.error-message {
+  color: #ba1f33;
+  font-weight: 600;
+  margin-top: var(--spacing-sm);
+}
+
+/* Detail popup text */
+.detail-popup p {
+  margin-bottom: var(--spacing-sm);
+  color: #333333;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Responsive Changes */
+@media (max-width: 768px) {
+  .search-bar input {
+    width: 180px;
   }
-  .chart-section .chart-container {
-    height: 300px; /* Slightly smaller for mobile */
+
+  .inventory-table table th,
+  .inventory-table table td {
+    font-size: 0.85rem;
+    padding: 8px;
   }
 }
