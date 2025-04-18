@@ -4,13 +4,13 @@ import { getFirestore } from "firebase/firestore";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBukaMCRyNOmOeTEaKqECuUsuQcukCnDXM",
-  authDomain: "web-based-inventory-management.firebaseapp.com",
-  projectId: "web-based-inventory-management",
-  storageBucket: "web-based-inventory-management.firebasestorage.app",
-  messagingSenderId: "70864727944",
-  appId: "1:70864727944:web:aaf9bb36b26a84bdad543d",
-  measurementId: "G-ZGHN748JM4"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
