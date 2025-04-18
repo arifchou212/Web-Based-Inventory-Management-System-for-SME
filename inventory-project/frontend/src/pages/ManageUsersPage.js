@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, promoteUser, removeUser } from '../api';
+import { getUsers, promoteUser, removeUser, demoteUser, getActivityLogs } from '../api';
 import { FaUserShield, FaTrash } from 'react-icons/fa';
 import "../styles/ManageUsersPage.css";
 
@@ -41,6 +41,21 @@ const ManageUsersPage = () => {
     }
   };
 
+  const handleDemote = async (userId, userEmail) => {
+    const password = prompt("Enter your password to confirm demotion:");
+    if (!password) return;
+    if (window.confirm("Are you sure you want to demote this manager to staff?")) {
+      try {
+        await demoteUser(userId, password, adminUid, companyName);
+        alert("User demoted successfully.");
+        fetchUsers(); // refresh user list
+      } catch (error) {
+        alert("Failed to demote user: " + error.message);
+      }
+    }
+  };
+  
+
   const handleRemove = async (userId, userEmail) => {
     const password = prompt("Enter your password to confirm removal:");
     if (!password) return;
@@ -75,22 +90,28 @@ const ManageUsersPage = () => {
                 <td>{user.email}</td>
                 <td className={`role-${user.role}`}>{user.role}</td>
                 <td>
-                  {user.role !== 'admin' && (
-                    <>
-                      <button className="btn-promote" onClick={() => handlePromote(user.id, user.email)}>
-                        <FaUserShield /> Promote
-                      </button>
-                      <button className="btn-remove" onClick={() => handleRemove(user.id, user.email)}>
-                        <FaTrash /> Remove
-                      </button>
-                    </>
-                  )}
-                </td>
+                {user.role === 'staff' && (
+                  <button className="btn-promote" onClick={() => handlePromote(user.id, user.email)}>
+                    <FaUserShield /> Promote
+                  </button>
+                )}
+                {user.role === 'manager' && (
+                  <button className="btn-demote" onClick={() => handleDemote(user.id, user.email)}>
+                    Demote
+                  </button>
+                )}
+                {user.role !== 'admin' && (
+                  <button className="btn-remove" onClick={() => handleRemove(user.id, user.email)}>
+                    <FaTrash /> Remove
+                  </button>
+                )}
+              </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
     </div>
   );
 };
