@@ -1,15 +1,21 @@
 import axios from "axios";
 
-// Base API URL (Change if needed)
 const API_BASE_URL = "/api";
 
-// Helper function to get Auth Token
-const getAuthHeaders = () => {
+export const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  const uid = localStorage.getItem("uid");
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  if (uid) {
+    headers.uid = uid;
+  }
+  return headers;
 };
 
+
+// ---------------------------------------------
 // AUTHENTICATION APIs
+// ---------------------------------------------
 
 // Signup API
 export const signUp = async (data) => {
@@ -56,7 +62,9 @@ export const requestPasswordReset = async (email) => {
   }
 };
 
+// ---------------------------------------------
 // INVENTORY MANAGEMENT APIs
+// ---------------------------------------------
 
 // Upload CSV for bulk inventory upload
 export const uploadCSV = async (file, companyName) => {
@@ -95,7 +103,7 @@ export const getInventory = async (companyName) => {
 export const addInventoryItem = async (itemData) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/add-inventory`, itemData, {
-      headers: getAuthHeaders(),
+      headers: { ...getAuthHeaders() },
     });
     return response.data;
   } catch (error) {
@@ -107,7 +115,7 @@ export const addInventoryItem = async (itemData) => {
 export const updateInventoryItem = async (itemId, updatedData) => {
   try {
     const response = await axios.put(`${API_BASE_URL}/update-inventory/${itemId}`, updatedData, {
-      headers: getAuthHeaders(),
+      headers: { ...getAuthHeaders() },
     });
     return response.data;
   } catch (error) {
@@ -115,12 +123,12 @@ export const updateInventoryItem = async (itemId, updatedData) => {
   }
 };
 
+
 // Delete Inventory Item
-export const deleteInventoryItem = async (itemId, companyName) => {
+export const deleteInventoryItem = async (itemId) => {
   try {
     const response = await axios.delete(`${API_BASE_URL}/delete-inventory/${itemId}`, {
-      params: { companyName },
-      headers: getAuthHeaders(),
+      headers: { ...getAuthHeaders() },
     });
     return response.data;
   } catch (error) {
@@ -128,7 +136,50 @@ export const deleteInventoryItem = async (itemId, companyName) => {
   }
 };
 
+// ---------------------------------------------
+// Tasks API's
+// ---------------------------------------------
+
+// Get tasks
+export async function getTasks(adminUid, companyName) {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/tasks`, {
+      headers: { ...getAuthHeaders(), uid: adminUid, companyName },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Failed to fetch tasks");
+  }
+}
+
+// Create a new task
+export async function createTask(adminUid, companyName, payload) {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/tasks`, payload, {
+      headers: { ...getAuthHeaders(), uid: adminUid, companyName },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Failed to create task");
+  }
+}
+
+// Get low-stock items
+export async function getLowStock(adminUid, companyName) {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/low-stock`, {
+      headers: { ...getAuthHeaders(), uid: adminUid, companyName },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Failed to fetch low stock items");
+  }
+}
+
+
+// ---------------------------------------------
 // USER MANAGEMENT APIs (Admin Only)
+// ---------------------------------------------
 
 // Get all users for the admin's company
 export const getUsers = async (adminUid, companyName) => {
@@ -168,3 +219,62 @@ export const removeUser = async (uid, password, adminUid, companyName) => {
     throw new Error(error.response?.data?.error || "Failed to remove user");
   }
 };
+
+// Demote User to staff
+export const demoteUser = async (uid, password, adminUid, companyName) => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/users/${uid}/demote`,
+      { password },
+      { headers: { ...getAuthHeaders(), uid: adminUid, companyName } }
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Failed to demote user");
+  }
+};
+
+// ---------------------------------------------
+// Analytics and Reports API's
+// ---------------------------------------------
+
+// Fetch detailed inventory reports
+export const getReports = async (start, end, reportType, companyName) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/reports`, {
+      params: { start, end, type: reportType, companyName },
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Failed to fetch reports");
+  }
+};
+
+// Fetch aggregated analytics data
+export const getAnalytics = async (start, end, companyName) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/analytics`, {
+      params: { start, end, companyName },
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.error || "Failed to fetch analytics");
+  }
+};
+
+// Fetch analytics summary data
+export async function getAnalyticsSummary(companyName) {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/analytics-summary`, {
+      params: { companyName },
+      headers: getAuthHeaders(),
+    });
+    return response.data; // This is the merged analytics object
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.error || "Failed to fetch analytics summary"
+    );
+  }
+}
