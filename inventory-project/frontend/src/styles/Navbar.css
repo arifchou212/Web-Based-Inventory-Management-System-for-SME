@@ -18,10 +18,14 @@
 
 /* Navbar Left */
 .navbar-brand {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
-  color: #ecf0f1;
+  color: #C9A66B;
   text-decoration: none;
+}
+
+.navbar-brand:hover {
+  color: #be9e66;
 }
 
 /* Navbar Right */
@@ -97,10 +101,10 @@
 }
 
 /* Buttons */
-.nav-right .btn {
-  padding: 7px 18px; 
+.nav-right .btn { 
+  margin-top: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 21px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -109,20 +113,21 @@
 }
 
 .login-btn {
-  background-color: #27ae60;
-  color: #fff;
+  background-color: #C9A66B;
+  color: #000000;
   border: 2px solid #1e8449;
 }
 
 .login-btn:hover {
-  background-color: #2ecc71;
+  background-color: #bd9c65;
+  color: rgb(26, 24, 24);
   box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .logout-btn {
-  background-color: #e74c3c;
-  color: #fff;
-  border: 2px solid #c0392b;
+  background: transparent;
+  border: 2px solid #C9A66B;
+  color: #C9A66B;
 }
 
 .logout-btn:hover {
