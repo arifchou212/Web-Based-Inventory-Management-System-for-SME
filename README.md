@@ -1,5 +1,5 @@
-# Web-Based Inventory Management System for Small Business 
 
+# Web-Based Inventory Management System for Small Business
 
 A full-stack inventory management system using:
 
@@ -12,17 +12,17 @@ Built for small businesses to manage inventory, users, and analytics with ease.
 ---
 
 ## 📁 Project Structure
-
 ```
 inventory-project/
-├── backend/              # Flask API
+├── backend/                  # Flask API
 │   ├── app.py
 │   ├── db_init.py
-│   ├── firebase_config.py # (not committed)
+│   ├── firebase_config.py
 │   ├── tasks_api.py
-│  
+│   ├── firebase_config.json   # (not committed)
+│   └── requirements.txt
 │
-├── frontend/             # React frontend
+├── frontend/                 # React frontend
 │   ├── public/
 │   └── src/
 │       ├── api.js
@@ -32,13 +32,14 @@ inventory-project/
 │       ├── context/
 │       ├── pages/
 │       └── styles/
-│   └── .env              # (not committed)
+│   ├── .env                   # (not committed)
+│   └── package.json
 │
-├── functions/            # Firebase functions (optional)
+├── functions/                # Firebase functions (optional)
 │   ├── index.js
 │   └── package.json
 │
-├── .env                  # Global/backend env (not committed)
+├── .env                      # Global/backend config (not committed)
 └── README.md
 ```
 
@@ -58,8 +59,6 @@ Firebase CLI          # (Optional) For Firebase functions
 
 ## 🔧 1. Clone the Repository
 
-Clone the repository from GitLab and move into the project folder:
-
 ```bash
 git clone https://campus.cs.le.ac.uk/gitlab/ug_project/24-25/ac896.git
 cd inventory-project
@@ -78,8 +77,8 @@ To run the project, you must create the following config files manually (they ar
 ```env
 JWT_SECRET=your_generated_secret_here
 
-SMTP_EMAIL=your_email
-SMTP_PASSWORD=
+SMTP_EMAIL=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=465
 ```
@@ -88,25 +87,21 @@ SMTP_PORT=465
 
 ### 🛠️ How to Set Missing Secrets
 
-Some environment variables must be generated or retrieved manually. Here's how:
-
----
-
 #### 🔑 `JWT_SECRET`
 
-Used to sign and verify JWT tokens in the backend (for secure login sessions).
+Used to sign and verify JWT tokens in the backend.
 
-You can generate it using Python or Node.js:
+Generate a secure token using one of these:
 
 ```bash
-# Using Python
+# Python
 python -c "import secrets; print(secrets.token_hex(32))"
 
-# Or using Node.js
+# Node.js
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Copy the output (a long random string) and add it to your root `.env` file:
+Paste the result into your `.env`:
 
 ```env
 JWT_SECRET=your_generated_secret_here
@@ -116,26 +111,13 @@ JWT_SECRET=your_generated_secret_here
 
 #### 📬 `SMTP_PASSWORD` (Gmail Users)
 
-Used to send verification and activity log emails.
+> ⚠️ **Do NOT use your real Gmail password** — use a generated **App Password**.
 
-> ⚠️ **Do NOT use your actual Gmail password.**  
-> You must generate an **App Password**.
-
-##### To generate one:
-
-1. Go to your Google Account: [https://myaccount.google.com/security](https://myaccount.google.com/security)
+1. Visit [https://myaccount.google.com/security](https://myaccount.google.com/security)
 2. Enable **2-Step Verification**
-3. After enabling, go to **App Passwords**:  
-   [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-4. Under "Select App", choose **Mail**
-5. Under "Select Device", choose **Other** and name it (e.g., *InventoryApp*)
-6. Click **Generate** — you'll get a 16-character password like:
-
-```
-abcd efgh ijkl mnop
-```
-
-Remove the spaces and use it in your `.env`:
+3. Go to [https://myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+4. Select **Mail** and name your app (e.g., *InventoryApp*)
+5. Copy the 16-character password and use it in your `.env`
 
 ```env
 SMTP_EMAIL=your_email@gmail.com
@@ -144,10 +126,7 @@ SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=465
 ```
 
-✅ Now your email sending features will work securely.
-
 ---
-
 
 ### 2. `.env` in **frontend folder** (`inventory-project/frontend/.env`)
 
@@ -155,46 +134,95 @@ SMTP_PORT=465
 REACT_APP_API_BASE_URL=http://127.0.0.1:5000/api
 ```
 
+(If using Vite instead of Create React App, use `VITE_BACKEND_URL` instead.)
+
 ---
 
 ### 3. `firebase_config.json` in **backend folder**
 
-This file is required by the Firebase Admin SDK for backend authentication.
+This is the Firebase Admin SDK private key used by Flask to communicate with Firebase securely.
 
-#### 📥 To get it:
+📥 **To generate it:**
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Open your project → Project Settings → Service Accounts
-3. Click **“Generate new private key”**
-4. Save the file as:
+1. Go to [https://console.firebase.google.com](https://console.firebase.google.com)
+2. Open your project → ⚙️ Project Settings → Service Accounts
+3. Click **"Generate new private key"**
+4. Rename the file to `firebase_config.json`
+5. Place it in:
 
 ```
 inventory-project/backend/firebase_config.json
 ```
 
-⚠️ **DO NOT commit this file to Git.**
+⚠️ **DO NOT commit this file.**
+
+---
+
+## 🔥 Firebase Setup for Frontend
+
+To connect the React app to Firebase, you need to configure it with your Firebase web credentials.
+
+---
+
+### ✅ 1. Create a Firebase Project
+
+1. Visit [https://console.firebase.google.com](https://console.firebase.google.com)
+2. Click **“Add Project”** and follow the steps
+
+---
+
+### ✅ 2. Register a Web App
+
+1. Inside the Firebase dashboard → ⚙️ **Project Settings**
+2. Scroll to **"Your apps"** and click the **</> (Web)** icon
+3. Name your app (e.g., `InventoryFrontend`)
+4. Firebase will give you a config object like this:
+
+```js
+const firebaseConfig = {
+  apiKey: "AIzaSyExampleKey",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:exampleid",
+  measurementId: "G-EXAMPLEID"
+};
+```
+
+---
+
+### ✅ 3. Add the config to your `.env` in `frontend/`
+
+```env
+VITE_FIREBASE_API_KEY=AIzaSyExampleKey
+VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your-project
+VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+VITE_FIREBASE_APP_ID=1:123456789:web:exampleid
+VITE_FIREBASE_MEASUREMENT_ID=G-EXAMPLEID
+```
+
+✅ These values are public by design and safe to expose on the frontend.
 
 ---
 
 ## 🧩 2. Run the Backend (Flask)
 
-From the project root:
-
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate       # On Windows: venv\Scripts\activate
+source venv/bin/activate       # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 ```
 
-🟢 Backend will start at: `http://localhost:5000`
+🟢 Backend runs at: `http://localhost:5000`
 
 ---
 
 ## 🖼️ 3. Run the Frontend (React)
-
-From the project root:
 
 ```bash
 cd frontend
@@ -202,7 +230,7 @@ npm install
 npm start
 ```
 
-🟢 Frontend will start at: `http://localhost:3000`
+🟢 Frontend runs at: `http://localhost:3000`
 
 Make sure the backend is running before accessing the frontend.
 
@@ -218,7 +246,7 @@ npm install
 firebase emulators:start
 ```
 
-You need Firebase CLI installed and `firebase.json` configured properly.
+You must have the Firebase CLI installed and `firebase.json` configured properly.
 
 ---
 
@@ -235,7 +263,7 @@ You need Firebase CLI installed and `firebase.json` configured properly.
 
 ## 🛡️ What NOT to Commit
 
-The following files and folders contain sensitive or unnecessary data and should be excluded using `.gitignore`:
+The following should be excluded using `.gitignore`:
 
 ```
 # Python
@@ -250,7 +278,7 @@ functions/node_modules/
 # Env & Secrets
 .env
 frontend/.env
-backend/serviceAccountKey.json
+backend/firebase_config.json
 
 # System Files
 .DS_Store
@@ -258,3 +286,22 @@ Thumbs.db
 .vscode/
 .idea/
 ```
+
+---
+
+## 📃 License
+
+MIT
+
+---
+
+## 🙌 Contributing
+
+Pull requests are welcome. For significant changes, open an issue to discuss the idea first.
+```
+
+---
+
+✅ You can now copy and paste this entire thing directly into your `README.md`.
+
+Let me know if you'd like a matching `.gitignore`, sample `.env.example`, or starter `firebase.js`.
