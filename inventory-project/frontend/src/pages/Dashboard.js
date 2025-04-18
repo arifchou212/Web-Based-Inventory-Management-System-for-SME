@@ -1,134 +1,304 @@
-import React from 'react';
-import { Bar, Pie } from 'react-chartjs-2';
-import { Chart, CategoryScale, ArcElement, BarElement, LineElement, PointElement, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-import Sidebar from '../components/Sidebar'; 
-import '../styles/Dashboard.css';
+import React, { useState, useEffect } from "react";
+import { getAnalyticsSummary } from "../api";
+import { Line, Pie } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  BarElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import Sidebar from "../components/Sidebar";
+import "../styles/Dashboard.css";
 
-// Register Chart.js components
-Chart.register(CategoryScale, ArcElement, BarElement, LineElement, PointElement, LinearScale, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  BarElement,
+  PointElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
-const Dashboard = ({ userRole }) => {  
-  // Mock data for the bar chart (Stock Trends)
-  const stockData = {
-    labels: ['Item A', 'Item B', 'Item C', 'Item D', 'Item E'],
+/* Utility function to safely format numeric values */
+function formatNumber(value) {
+  if (value === null || value === undefined) return "N/A";
+  const num = parseFloat(value);
+  if (isNaN(num)) return String(value);
+  return num % 1 === 0 ? String(num) : num.toFixed(2);
+}
+
+const Dashboard = ({ userRole }) => {
+  const [analytics, setAnalytics] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // "Show More" toggles
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
+  const [showAllLowStock, setShowAllLowStock] = useState(false);
+
+  // Grab company name from localStorage
+  const companyName = localStorage.getItem("company")?.toLowerCase() || "";
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      // Single unified endpoint => /api/analytics-summary
+      const analyticsData = await getAnalyticsSummary(companyName);
+      setAnalytics(analyticsData);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    }
+    setLoading(false);
+  };
+
+  if (loading) return <p>Loading dashboard data...</p>;
+  if (!analytics) return <p className="loading">No dashboard data available. Please check back later.</p>;
+
+  // Destructure fields from analytics
+  const {
+    totalSales = 0,
+    revenueThisMonth = 0,
+    pendingOrders = 0,
+    topSelling = [],
+    
+    totalItems = 0,
+    totalValue = 0,
+    categoryCount = 0,
+    categories = [],         // for pie chart
+    outOfStockCount = 0,
+    avgPrice = 0,
+
+    // For line chart
+    stockTrends = [],
+
+    // Notifications
+    notifications = [],
+
+    // Low stock
+    lowStock = []
+  } = analytics;
+
+  // Prepare line chart data from stockTrends
+  const lineChartData = {
+    labels: stockTrends.map((item) => item.date),
     datasets: [
       {
-        label: 'Stock Levels',
-        data: [20, 15, 10, 25, 5],
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        borderWidth: 1,
+        label: "Stock Levels",
+        data: stockTrends.map((item) => item.stock),
+        borderColor: "#4c9aff",
+        backgroundColor: "rgba(76,154,255,0.2)",
+        tension: 0.3,
+      },
+      {
+        label: "Sold",
+        data: stockTrends.map((item) => item.sold),
+        borderColor: "#82ca9d",
+        backgroundColor: "rgba(130,202,157,0.2)",
+        tension: 0.3,
       },
     ],
   };
 
-  // Mock data for the pie chart (Category Distribution)
-  const categoryData = {
-    labels: ['Electronics', 'Clothing', 'Home Goods', 'Accessories'],
+  // Prepare pie chart data from categories
+  const pieChartData = {
+    labels: categories.map((cat) => cat.name),
     datasets: [
       {
-        data: [40, 30, 20, 10],
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'],
+        data: categories.map((cat) => cat.count),
+        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"],
       },
     ],
   };
 
-  // Mock data for recent activity
-  const recentActivity = [
-    'Item A was updated (Stock: 20 → 15)',
-    'Item B was added (Stock: 10)',
-    'Item C was deleted',
-  ];
+  // Sort notifications by createdAt desc
+  const sortedNotifications = [...notifications].sort((a, b) => {
+    const dateA = a.createdAt ? new Date(a.createdAt) : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt) : 0;
+    return dateB - dateA;
+  });
+  const displayedNotifications = showAllNotifications
+    ? sortedNotifications
+    : sortedNotifications.slice(0, 3);
+
+  // Show only first 3 or all for low stock
+  const displayedLowStock = showAllLowStock ? lowStock : lowStock.slice(0, 3);
 
   return (
-    <div className="dashboard-container">
-      <Sidebar userRole={userRole} /> {/* Pass userRole to Sidebar */}
-      {/* Main Content */}
-            <div className="dashboard-content">
-              <h1>Inventory Overview</h1>
-      
-              {/* Low-Stock Alerts */}
-              <div className="dashboard-section">
-                <h2>Low-Stock Alerts</h2>
-                <ul>
-                  <li>Item C - Stock: 10</li>
-                  <li>Item E - Stock: 5</li>
-                </ul>
-              </div>
-      
-              {/* Inventory Summary */}
-              <div className="dashboard-section">
-                <h2>Inventory Summary</h2>
-                <div className="summary-cards">
-                  <div className="summary-card">
-                    <h3>Total Items</h3>
-                    <p>150</p>
-                  </div>
-                  <div className="summary-card">
-                    <h3>Total Value</h3>
-                    <p>$10,000</p>
-                  </div>
-                  <div className="summary-card">
-                    <h3>Categories</h3>
-                    <p>5</p>
-                  </div>
+    <div className="admin-dashboard">
+      <Sidebar userRole={userRole} />
+      <div className="dashboard-content">
+        {/* Header */}
+        <header className="dashboard-header">
+          <h1>Welcome to the Dashboard</h1>
+        </header>
+
+        {/* KPI Container */}
+        <div className="kpi-container">
+          <div className="kpi-box">
+            <h4>Total Sales</h4>
+            <p>{formatNumber(totalSales)}</p>
+          </div>
+          <div className="kpi-box">
+            <h4>Revenue This Month</h4>
+            <p>${formatNumber(revenueThisMonth)}</p>
+          </div>
+          <div className="kpi-box">
+            <h4>Pending Orders</h4>
+            <p>{formatNumber(pendingOrders)}</p>
+          </div>
+          <div className="kpi-box">
+            <h4>Top-Selling Product</h4>
+            <p>{topSelling?.[0]?.name || "N/A"}</p>
+          </div>
+        </div>
+
+        {/* Two Column Row */}
+        <div className="dashboard-two-col">
+          {/* LEFT Column => Inventory Summary & Stock Trends */}
+          <div className="dashboard-left">
+            {/* Inventory Summary */}
+            <div className="dashboard-section inventory-summary">
+              <h2>Inventory Summary</h2>
+              <div className="summary-cards">
+                <div className="summary-card">
+                  <h3>Total Items</h3>
+                  <p>{formatNumber(totalItems)}</p>
                 </div>
-              </div>
-      
-              {/* Stock Trends (Bar Chart) */}
-              <div className="dashboard-section">
-                <h2>Stock Trends</h2>
-                <div className="chart-container">
-                  <Bar
-                    data={stockData}
-                    options={{
-                      responsive: true,
-                      plugins: {
-                        legend: {
-                          position: 'top',
-                        },
-                        title: {
-                          display: true,
-                          text: 'Stock Levels',
-                        },
-                      },
-                    }}
-                  />
+                <div className="summary-card">
+                  <h3>Total Value</h3>
+                  <p>${formatNumber(totalValue)}</p>
                 </div>
-              </div>
-      
-              {/* Category Distribution (Pie Chart) */}
-              <div className="dashboard-section">
-                <h2>Category Distribution</h2>
-                <div className="chart-container">
-                  <Pie
-                    data={categoryData}
-                    options={{
-                      responsive: true,
-                      plugins: {
-                        legend: {
-                          position: 'top',
-                        },
-                        title: {
-                          display: true,
-                          text: 'Inventory by Category',
-                        },
-                      },
-                    }}
-                  />
+                <div className="summary-card">
+                  <h3>Categories</h3>
+                  <p>{formatNumber(categoryCount)}</p>
                 </div>
-              </div>
-      
-              {/* Recent Activity */}
-              <div className="dashboard-section">
-                <h2>Recent Activity</h2>
-                <ul>
-                  {recentActivity.map((activity, index) => (
-                    <li key={index}>{activity}</li>
-                  ))}
-                </ul>
+                <div className="summary-card">
+                  <h3>Out of Stock</h3>
+                  <p>{formatNumber(outOfStockCount)}</p>
+                </div>
+                <div className="summary-card">
+                  <h3>Avg Price</h3>
+                  <p>${formatNumber(avgPrice)}</p>
+                </div>
               </div>
             </div>
+
+            {/* Stock Trends (Line Chart) */}
+            <div className="dashboard-section chart-section">
+              <h2>Stock Trends</h2>
+              <div className="chart-container">
+                <Line
+                  data={lineChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { position: "top" },
+                      title: { display: true, text: "Stock Levels Over Time" },
+                    },
+                    scales: {
+                      y: { beginAtZero: true },
+                    },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT Column => Notifications & Low Stock Alerts */}
+          <div className="dashboard-right">
+            <div className="dashboard-section notifications-section">
+              <h2>Notifications / Tasks</h2>
+              {sortedNotifications.length === 0 ? (
+                <p>No notifications at the moment.</p>
+              ) : (
+                <>
+                  <ul>
+                    {displayedNotifications.map((note, idx) => (
+                      <li key={note.id || idx}>
+                        <strong>{note.title}</strong> - {note.urgency}
+                        <br />
+                        {note.description}
+                      </li>
+                    ))}
+                  </ul>
+                  {sortedNotifications.length > 3 && (
+                    <div className="show-more-btn-container">
+                      <button
+                        className="show-more-btn"
+                        onClick={() =>
+                          setShowAllNotifications(!showAllNotifications)
+                        }
+                      >
+                        {showAllNotifications ? "Show Less" : "Show More"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="dashboard-section low-stock-list">
+              <div className="low-stock-section">
+              <h2>Low Stock Alerts</h2>
+              {lowStock.length === 0 ? (
+                <p>No low-stock items at the moment.</p>
+              ) : (
+                <>
+                  <ul>
+                    {displayedLowStock.map((item, idx) => (
+                      <li key={item.id || idx}>
+                        {item.name} - Stock: {formatNumber(item.quantity)}
+                      </li>
+                    ))}
+                  </ul>
+                  {lowStock.length > 3 && (
+                    <div className="show-more-btn-container">
+                      <button
+                        className="show-more-btn"
+                        onClick={() => setShowAllLowStock(!showAllLowStock)}
+                      >
+                        {showAllLowStock ? "Show Less" : "Show More"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Category Distribution (Pie Chart) */}
+        <div className="dashboard-section chart-section">
+          <h2>Category Distribution</h2>
+          <div className="chart-container">
+            <Pie
+              data={pieChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: { position: "top" },
+                  title: { display: true, text: "Inventory by Category" },
+                },
+              }}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
