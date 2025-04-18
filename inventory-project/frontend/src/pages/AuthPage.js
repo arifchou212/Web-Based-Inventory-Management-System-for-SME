@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { auth, googleProvider } from "../firebase";
 import { signInWithPopup, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { signUp, login, googleSignIn, requestPasswordReset } from "../api"; 
 import { useAuth } from "../context/AuthContext";
-
-import PasswordStrengthIndicator from "./PasswordStrengthIndicator"; 
+import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
+import ReactDOM from "react-dom"; 
 import "../styles/AuthPage.css";
 
 const AuthPage = () => {
@@ -43,7 +44,6 @@ const AuthPage = () => {
     lastName: "",
   });
 
-  // Validate password complexity
   const validatePassword = (password) => {
     const errs = [];
     if (password.length < 8) errs.push("min_length");
@@ -55,6 +55,7 @@ const AuthPage = () => {
     setPasswordErrors(errs);
     return errs.length === 0 && password.length > 0;
   };
+
 
   // Basic front-end form checks
   const validateForm = () => {
@@ -90,7 +91,6 @@ const AuthPage = () => {
   };
   
   // handleAuth (login / signup)
-
   const handleAuth = async () => {
     if (!validateForm()) return;
 
@@ -105,17 +105,39 @@ const AuthPage = () => {
                 setErrorMessage("❌ Please verify your email before logging in.");
                 return;
               }
+            const db = getFirestore();
+            let fullName = "";
 
-              // Save user session (use localStorage)
-              localStorage.setItem("token", data.token);
-              localStorage.setItem("uid", userCred.user.uid);
-              localStorage.setItem("role", data.role || "user");
-              localStorage.setItem("company", data.company || "");
+            // Check if displayName is set
+            if (userCred.user.displayName) {
+              fullName = userCred.user.displayName;
+            } else {
+              // Fetch user's first and last name from Firestore
+              try {
+                const userDocRef = doc(db, "companies", data.company, "users", userCred.user.uid);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists()) {
+                  const userData = userDoc.data();
+                  fullName = `${userData.firstname} ${userData.lastname}`;
+                } else {
+                  fullName = "Unknown User";
+                }
+              } catch (err) {
+                console.error("Error fetching user data from Firestore:", err);
+                fullName = "Anonymous User"; 
+              }
+            }
+
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("uid", userCred.user.uid);
+            localStorage.setItem("role", data.role || "user");
+            localStorage.setItem("company", data.company.toLowerCase() || "");
+            localStorage.setItem("firstname", data.firstname)
+            localStorage.setItem("fullname", fullName); 
 
               // Redirect to correct dashboard
               redirectUser(data.role);
         } else {
-            
             if (form.password !== form.confirmPassword) {
                 setErrors({ confirmPassword: "Passwords do not match" });
                 return;
@@ -147,20 +169,23 @@ const redirectUser = (role) => {
   }
 };
 
-
   // Google Sign-In Flow
   const handleGoogleSignIn = async () => {
     try {
       setGooglePending(true);
 
+      // Sign in with popup
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
 
+      // Check if new user
       const data = await googleSignIn(idToken); 
       if (data.requiresAdditionalInfo) {
+        // Show form for additional info
         setShowAdditionalInfoForm(true);
         return;
       }
+      // Otherwise user is recognized
       handleAuthSuccess(data);
     } catch (error) {
       console.error("Google Sign-In Error:", error);
@@ -207,7 +232,7 @@ const redirectUser = (role) => {
     }
 };
 
-  // Input Handlers
+  // Input Handler
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
@@ -252,11 +277,12 @@ const toggleForm = (event) => {
     if (user) {
         await user.reload();  // Refresh user data
         if (user.emailVerified) {
-            alert("Your email has been verified! You can now log in.");
+            alert("✅ Your email has been verified! You can now log in.");
             setShowVerifyMessage(false);
         }
     }
 };
+
 
   return (
     <div className="auth-container">
@@ -297,7 +323,7 @@ const toggleForm = (event) => {
                 onChange={handleChange}
               />
               <i
-                className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"} password-toggle`}
+                className={`fa-solid ${showPassword ?  "fa-eye-slash" : "fa-eye"} password-toggle`}
                 onClick={() => setShowPassword(!showPassword)}
               />
             </div>
@@ -455,7 +481,7 @@ const toggleForm = (event) => {
       </div>
 
        {/* Forgot Password Modal */}
-       {isForgotPasswordModalOpen && (
+       {isForgotPasswordModalOpen && ReactDOM.createPortal(
         <div className="modal-overlay">
           <div className="modal">
             <h3>Reset Password</h3>
@@ -478,7 +504,8 @@ const toggleForm = (event) => {
             </div>
             {errors.reset && <div className="error-message">{errors.reset}</div>}
           </div>
-        </div>
+        </div>,
+        document.getElementById("modal-root")
       )}
 
       {/* Additional Info for brand-new Google user */}
