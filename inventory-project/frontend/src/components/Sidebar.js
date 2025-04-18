@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FaHome, FaBox, FaUsers, FaCog, FaChartLine } from 'react-icons/fa';
+import { FaHome, FaBox, FaUsers, FaChartLine, FaClipboardList } from 'react-icons/fa';
 import '../styles/Sidebar.css';
 
 const Sidebar = ({ userRole }) => {
@@ -19,6 +19,12 @@ const Sidebar = ({ userRole }) => {
         <li>
           <Link to={dashboardRoute} className="sidebar-link">
             <FaHome className="icon" /> Dashboard
+          </Link>
+        </li>
+
+        <li>
+          <Link to="/tasks" className="sidebar-link">
+            <FaClipboardList className="icon" /> Notifications
           </Link>
         </li>
 
@@ -41,12 +47,6 @@ const Sidebar = ({ userRole }) => {
             </li>
           </>
         )}
-
-        <li>
-          <Link to="/settings" className="sidebar-link">
-            <FaCog className="icon" /> Settings
-          </Link>
-        </li>
       </ul>
     </div>
   );
