@@ -1,0 +1,66 @@
+.unauthorised-container {
+    margin-top: 60px;        
+    min-height: calc(100vh - 60px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #F9F7F1; 
+    padding: 20px;
+  }
+  
+  .unauthorised-content {
+    background-color: #11293f; 
+    color: #ecf0f1;            
+    border-radius: 12px;
+    padding: 50px 50px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .unauthorised-content h1 {
+    font-size: 3.5rem;
+    margin-bottom: 20px;
+    color: #fd0707;
+    font-weight: bolder;
+  }
+  
+  .unauthorised-content p {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+  }
+  
+  .btn-group {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .go-back-btn {
+    background-color: var(--accent-gold);
+    color: #000;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 500;
+    transition: background 0.3s;
+  }
+  
+  .go-back-btn:hover {
+    background-color: #b08e58;
+  }
+  
+  .sign-in-btn {
+    background: transparent;
+    border: 2px solid var(--accent-gold);
+    color: var(--accent-gold);
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+  
+  .sign-in-btn:hover {
+    background-color: var(--accent-gold);
+    color: #000;
+  }
