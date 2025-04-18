@@ -21,7 +21,7 @@ export const HybridAuthProvider = ({ children }) => {
       }
 
       try {
-        // Find user doc in subcollection
+        //  Find user doc in subcollection
         const userDoc = await findCompanyUserDoc(firebaseUser.uid);
         if (!userDoc) {
           console.log("User doc not found in Firestore");
@@ -45,7 +45,7 @@ export const HybridAuthProvider = ({ children }) => {
         const mergedUser = {
           uid: firebaseUser.uid,
           ...userDoc,              
-          ...tokenRes.data,       
+          ...tokenRes.data,        
         };
 
         setUser(mergedUser);
