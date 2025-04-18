@@ -1,8 +1,6 @@
 from email.mime.text import MIMEText
 import os
 import re
-import csv
-import io
 import smtplib
 import jwt
 import pandas as pd
@@ -12,33 +10,39 @@ from functools import wraps
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+from twilio.rest import Client
 
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 
-# Load environment variables from .env (if available)
+# Load environment variables from .env 
 load_dotenv()
+from db_init import db 
+from tasks_api import tasks_bp
 
-# Get JWT secret key from environment
+# JWT secret key from environment
 JWT_SECRET = os.getenv("JWT_SECRET")
 if not JWT_SECRET:
     raise ValueError("⚠️ JWT_SECRET is missing! Set it in your environment variables or .env file.")
 
-# Firebase Configuration (Optional)
+# Firebase Configuration
 FIREBASE_CONFIG = {
     "apiKey": os.environ.get('FIREBASE_API_KEY'),
     "authDomain": os.environ.get('FIREBASE_AUTH_DOMAIN'),
-    # ... Add other Firebase config if needed
 }
+
+
+# Initialize Firebase Admin SDK
+# cred = credentials.Certificate("firebase_config.json")  # Make sure this file exists
+# firebase_admin.initialize_app(cred)
+# db = firestore.client()
+
 
 # Initialize Flask App
 app = Flask(__name__)
 CORS(app, origins=os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000'))
+app.register_blueprint(tasks_bp, url_prefix="/api")
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("firebase_config.json")  # Make sure this file exists
-firebase_admin.initialize_app(cred)
-db = firestore.client()
 
 # --------------------------------------------------------------------------------
 # Password Complexity Requirements
@@ -99,7 +103,6 @@ def send_verification_email(to_email, verification_link):
     msg["Subject"] = subject
 
     try:
-        # Use SSL to connect securely to Gmail SMTP
         server = smtplib.SMTP_SSL(smtp_server, smtp_port)
         server.login(sender_email, sender_password)
         server.sendmail(sender_email, to_email, msg.as_string())
@@ -107,6 +110,34 @@ def send_verification_email(to_email, verification_link):
         print("✅ Verification email sent successfully!")
     except Exception as e:
         print(f"❌ Error sending email: {e}")
+        
+        
+def send_forgot_password_email(to_email, reset_link):
+    """New function to send Forgot Password email using the same SMTP settings."""
+    sender_email = os.getenv("SMTP_EMAIL")
+    sender_password = os.getenv("SMTP_PASSWORD")
+
+    subject = "Reset Your Password"
+    body = f"""
+    <p>You requested a password reset. Click below to reset your password:</p>
+    <p><a href="{reset_link}">{reset_link}</a></p>
+    <p>If you did not request this, you can safely ignore this email.</p>
+    """
+
+    msg = MIMEText(body, "html")
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    try:
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+        print("✅ Forgot Password email sent successfully!")
+    except Exception as e:
+        print(f"❌ Error sending Forgot Password email: {e}")
+        
 # --------------------------------------------------------------------------------
 # JWT Helpers
 # --------------------------------------------------------------------------------
@@ -136,7 +167,6 @@ def issue_token():
         if not user_data:
             return jsonify({"error": "User doc not found"}), 404
 
-        # Suppose user_data has { role: 'admin', ... }
         token = generate_jwt(uid, user_data['role'], company)  
         return jsonify({
             "token": token,
@@ -192,16 +222,17 @@ def create_user_in_company(uid, email, company_name, role, first_name, last_name
     return user_data
 
 # --------------------------------------------------------------------------------
-# Serve React Frontend (Optional)
+# Serve React Frontend 
 # --------------------------------------------------------------------------------
 @app.route('/')
 def serve_react():
-    """Serve React frontend (if you have a single-page app in /build)"""
     return send_from_directory(app.static_folder, "index.html")
 
 # --------------------------------------------------------------------------------
-# Signup (Email/Password)
+# Auth Section
 # --------------------------------------------------------------------------------
+
+# Signup (Email/Password)
 @app.route('/api/signup', methods=['POST'])
 def signup():
     try:
@@ -216,33 +247,26 @@ def signup():
         first_name = data['firstName'].strip()
         last_name = data['lastName'].strip()
 
-        # 1️⃣ Validate Password
         if errors := validate_password(password):
             return jsonify({"error": ", ".join(errors)}), 400
 
-        # 2️⃣ Check if user exists
         try:
             auth.get_user_by_email(email)
             return jsonify({"error": "Email is already registered"}), 400
         except firebase_admin.auth.UserNotFoundError:
             pass  
 
-        # 3️⃣ Create User in Firebase
         user_record = auth.create_user(email=email, password=password)
         uid = user_record.uid
         
-        # 4️⃣ Generate the verification link
         verification_link = auth.generate_email_verification_link(email)
 
-        # 5️⃣ Use your custom SMTP function to send the link
         send_verification_email(to_email=email, verification_link=verification_link)
 
-        # 4️⃣ Check if the user already exists in another company
         found_data, found_company = find_user_in_any_company(uid)
         if found_data:
             return jsonify({"error": "This UID is already registered under another company"}), 400
 
-        # 5️⃣ Check / Create the Company Doc
         company_ref = db.collection('companies').document(company_name)
         company_snap = company_ref.get()
         role = 'admin' if not company_snap.exists else 'staff'
@@ -252,10 +276,9 @@ def signup():
                 'name': company_name,
                 'createdAt': datetime.utcnow(),
                 'members': [],
-                'adminUid': uid  # ✅ FIX: Assign adminUid here
+                'adminUid': uid 
             })
 
-            # ✅ FIX: Create an Inventory Collection for the Company
             inventory_ref = (
                 db.collection("companies")
                 .document(company_name)
@@ -267,7 +290,6 @@ def signup():
                 "note": "Initial inventory doc",
             })
 
-        # 6️⃣ Store User in Firestore (within the company)
         user_ref = company_ref.collection('users').document(uid)
         user_data = {
             'uid': uid,
@@ -280,7 +302,6 @@ def signup():
         }
         user_ref.set(user_data)
 
-        # ✅ Add user to the company's members array
         company_ref.update({
             'members': firestore.ArrayUnion([uid])
         })
@@ -296,9 +317,7 @@ def signup():
         print("Signup error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-# --------------------------------------------------------------------------------
 # Login (Email/Password)
-# --------------------------------------------------------------------------------
 @app.route('/api/login', methods=['POST'])
 def login():
     try:
@@ -309,7 +328,7 @@ def login():
         if not email or not password:
             return jsonify({"error": "Email and password required"}), 400
 
-        # 1. Check if user exists in Firebase Auth
+        # Check if user exists in Firebase Auth
         try:
             user_record = auth.get_user_by_email(email)
         except firebase_admin.auth.UserNotFoundError:
@@ -320,16 +339,12 @@ def login():
         if not user_record.email_verified:
             return jsonify({"error": "Please verify your email before logging in."}), 403
 
-        # NOTE: We are not verifying the password here with Admin (not possible by default).
-        # For true password verification, you'd do it on the client with "signInWithEmailAndPassword"
-        # or call the REST "verifyPassword" endpoint from the server.
-
-        # 2. Find user doc in the correct subcollection
+        # Find user doc in the correct subcollection
         user_data, company = find_user_in_any_company(uid=uid)
         if not user_data:
             return jsonify({"error": "User not found in any company"}), 404
 
-        # 4. Generate a JWT
+        # Generate a JWT
         token = generate_jwt(uid, user_data["role"], company)
 
         return jsonify({
@@ -344,9 +359,7 @@ def login():
         print("Login error:", str(e))
         return jsonify({"error": "Login failed"}), 500
 
-# --------------------------------------------------------------------------------
 # Google Sign-In
-# --------------------------------------------------------------------------------
 @app.route('/api/google-signin', methods=['POST'])
 def google_signin():
     try:
@@ -359,12 +372,12 @@ def google_signin():
         if not id_token:
             return jsonify({"error": "Missing idToken"}), 400
 
-        # 1. Verify Google token
+        # Verify Google token
         decoded_token = auth.verify_id_token(id_token)
         uid = decoded_token['uid']
         email = decoded_token['email'].lower()
 
-        # 2. Check if user doc is in any company
+        # Check if user doc is in any company
         existing_data, existing_company = find_user_in_any_company(uid)
         if existing_data:
             # user doc found => immediate login
@@ -377,14 +390,14 @@ def google_signin():
                 "company": existing_company
             }), 200
 
-        # 3. If doc doesn't exist & no additional info => new user must provide extra
+        # If doc doesn't exist & no additional info => new user must provide extra
         if not (company_name and first_name and last_name):
             return jsonify({
                 "error": "New users must provide companyName, firstName, and lastName",
                 "requiresAdditionalInfo": True
             }), 200
 
-        # 4. Check / create company doc
+        # Check / create company doc
         company_name = company_name.lower()
         company_ref = db.collection('companies').document(company_name)
         company_snap = company_ref.get()
@@ -397,7 +410,7 @@ def google_signin():
                 'adminUid': None
             })
 
-        # 5. Create user doc in subcollection
+        # Create user doc in subcollection
         user_data = create_user_in_company(
             uid=uid,
             email=email,
@@ -408,7 +421,7 @@ def google_signin():
             status="active"
         )
 
-        # 6. Generate a JWT token
+        # Generate a JWT token
         token = generate_jwt(uid, role, company_name)
         return jsonify({
             "message": "Registration successful",
@@ -422,9 +435,7 @@ def google_signin():
         print("Google Sign-In error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-# --------------------------------------------------------------------------------
 # Forgot Password
-# --------------------------------------------------------------------------------
 @app.route('/api/forgot-password', methods=['POST'])
 def forgot_password():
     try:
@@ -432,9 +443,11 @@ def forgot_password():
         if not email:
             return jsonify({"error": "Email is required"}), 400
 
-        # Generates a password reset link using Firebase Admin
+        # Generate password reset link via Firebase Admin
         reset_link = auth.generate_password_reset_link(email)
-        # TODO: Integrate your email service to send `reset_link` to the user
+
+        # Send via your newly defined function
+        send_forgot_password_email(email, reset_link)
 
         return jsonify({"message": "Password reset email sent"}), 200
 
@@ -442,9 +455,13 @@ def forgot_password():
         return jsonify({"error": "No user found with this email"}), 404
     except Exception as e:
         print("Forgot Password error:", str(e))
-        return jsonify({"error": str(e)}), 500    
+        return jsonify({"error": str(e)}), 500
     
-# Inventory    
+# --------------------------------------------------------------------------------   
+# Inventory Section
+# --------------------------------------------------------------------------------
+
+# Get Inventory
 @app.route('/api/inventory', methods=['GET'])
 def get_inventory():
     company_name = request.args.get('companyName')
@@ -458,99 +475,232 @@ def get_inventory():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# Bulk Upload CSV API
+def get_admin_info(admin_uid):
+    """
+    Loop through all companies to find one that contains a user document in its "users" subcollection 
+    with the given UID. Returns a tuple: (full_name, company_id)
+    """
+    companies = db.collection('companies').stream()
+    for company_doc in companies:
+        user_doc = company_doc.reference.collection('users').document(admin_uid).get()
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            full_name = f"{user_data.get('firstName', '').strip()} {user_data.get('lastName', '').strip()}"
+            return full_name, company_doc.id  # using document ID as company name
+    return None, None
+
+def notify_company(subject, body, company_name):
+    """Send email notifications to all admins and managers in the company."""
+    company_ref = db.collection('companies').document(company_name)
+    company_doc = company_ref.get().to_dict()
+    if not company_doc:
+        return
+    member_uids = company_doc.get("members", [])
+    for uid in member_uids:
+        user_doc = db.collection('users').document(uid).get().to_dict()
+        if user_doc and user_doc.get("role") in ["admin", "manager"]:
+            to_email = user_doc.get("email")
+            if to_email:
+                send_email(to_email, subject, body)
+
+
+# CSV Upload Endpoint 
 @app.route('/api/upload-csv', methods=['POST'])
 def upload_csv():
-    company_name = request.form.get('companyName')
+    # Use UID from headers to derive company name and uploader's full name
+    admin_uid = request.headers.get("uid")
+    if not admin_uid:
+        return jsonify({"error": "Unauthorized: UID missing"}), 401
+    uploader, company_name = get_admin_info(admin_uid)
     if not company_name:
-        return jsonify({"error": "Company name is required"}), 400
+        return jsonify({"error": "Admin or company not found"}), 404
 
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
-
     file = request.files['file']
     if not (file.filename.endswith('.csv') or file.filename.endswith('.xlsx')):
         return jsonify({"error": "Invalid file type. Please upload a CSV or Excel file"}), 400
 
     try:
-        # Read file based on extension
+        import pandas as pd
         if file.filename.endswith('.csv'):
             df = pd.read_csv(file)
-        elif file.filename.endswith('.xlsx'):
+        else:
             df = pd.read_excel(file)
 
-        # Validate and upload data
         required_columns = ["Item Name", "Description", "Category", "Quantity", "Price", "Supplier"]
         if not all(column in df.columns for column in required_columns):
             return jsonify({"error": f"Invalid file format. Missing required columns: {required_columns}"}), 400
 
         inventory_ref = db.collection('companies').document(company_name).collection('inventory')
         for _, row in df.iterrows():
-            item_data = {
-                "name": row["Item Name"],
-                "description": row["Description"],
-                "category": row["Category"],
-                "quantity": int(row["Quantity"]),
-                "price": float(row["Price"]),
-                "supplier": row["Supplier"],
-            }
-            inventory_ref.add(item_data)
+            name = row["Item Name"]
+            supplier = row["Supplier"]
+            category = row["Category"]
+            quantity = int(row["Quantity"])
+            price = float(row["Price"])
+            description = row["Description"]
 
+            query = inventory_ref.where("name", "==", name)\
+                                  .where("supplier", "==", supplier)\
+                                  .where("category", "==", category).limit(1)
+            docs = list(query.stream())
+            if docs:
+                doc = docs[0]
+                item = doc.to_dict()
+                old_price = item.get("price", 0)
+                updated_quantity = item.get("quantity", 0) + quantity
+                price_diff = price - old_price
+                if price_diff > 0:
+                    price_change = "increase"
+                elif price_diff < 0:
+                    price_change = "decrease"
+                else:
+                    price_change = "no_change"
+                doc.reference.update({
+                    "quantity": updated_quantity,
+                    "price": price,
+                    "price_diff": price_diff,
+                    "price_change": price_change,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "updated_by": uploader
+                })
+            else:
+                new_item = {
+                    "name": name,
+                    "supplier": supplier,
+                    "category": category,
+                    "description": description,
+                    "quantity": quantity,
+                    "price": price,
+                    "added_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP,
+                    "price_diff": 0,
+                    "price_change": "no_change",
+                    "sold": 0,
+                    "added_by": uploader,
+                    "updated_by": uploader,
+                }
+                inventory_ref.add(new_item)
         return jsonify({"message": "File uploaded successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+# Upsert Inventory (Add or Update)
 @app.route('/api/add-inventory', methods=['POST'])
 def add_inventory():
     data = request.json
-    company_name = data.get("companyName")
+    admin_uid = request.headers.get("uid")
+    if not admin_uid:
+        return jsonify({"error": "Unauthorized: UID missing"}), 401
+
+    full_name, company_name = get_admin_info(admin_uid)
     if not company_name:
-        return jsonify({"error": "Company name is required"}), 400
+        return jsonify({"error": "Admin or company not found"}), 404
 
-    required_fields = ["name", "description", "category", "quantity", "price", "supplier"]
-    for field in required_fields:
-        if field not in data:
-            return jsonify({"error": f"Missing required field: {field}"}), 400
+    # Required fields check
+    name = data.get("name")
+    supplier = data.get("supplier")
+    quantity = data.get("quantity", 0)
+    new_price = data.get("price")
+    if name is None or supplier is None or new_price is None:
+        return jsonify({"error": "Missing required fields"}), 400
 
-    try:
-        inventory_ref = db.collection('companies').document(company_name).collection('inventory')
-        inventory_ref.add(data)
-        return jsonify({"message": "Item added successfully"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    inventory_ref = db.collection('companies').document(company_name).collection('inventory')
+    query = inventory_ref.where("name", "==", name)\
+                         .where("supplier", "==", supplier)\
+                         .where("category", "==", data.get("category")).limit(1)
+    docs = list(query.stream())
+    if docs:
+        doc = docs[0]
+        item = doc.to_dict()
+        old_price = item.get("price", 0)
+        updated_quantity = item.get("quantity", 0) + quantity
+        price_diff = new_price - old_price
+        if price_diff > 0:
+            price_change = "increase"
+        elif price_diff < 0:
+            price_change = "decrease"
+        else:
+            price_change = "no_change"
+        doc.reference.update({
+            "quantity": updated_quantity,
+            "price": new_price,
+            "price_diff": price_diff,
+            "price_change": price_change,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+            "updated_by": full_name
+        })
+        updated_item = doc.reference.get().to_dict()
+        updated_item["id"] = doc.id
+        notify_company("Inventory Updated", f"{name} updated. New quantity: {updated_quantity}, Price change: {price_change} ({price_diff}).", company_name)
+        return jsonify(updated_item), 200
+    else:
+        new_item = {
+            "name": name,
+            "supplier": supplier,
+            "category": data.get("category"),
+            "description": data.get("description", ""),
+            "quantity": quantity,
+            "price": new_price,
+            "added_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP,
+            "price_diff": 0,
+            "price_change": "no_change",
+            "sold": 0,
+            "added_by": full_name,
+            "updated_by": full_name,
+        }
+        doc_ref = inventory_ref.add(new_item)
+        new_item["id"] = doc_ref[1].id
+        notify_company("New Inventory Added", f"{name} added with quantity {quantity} at price ${new_price}.", company_name)
+        return jsonify(new_item), 201
 
-# Update Inventory Item API
+# Update Inventory Endpoint
 @app.route('/api/update-inventory/<item_id>', methods=['PUT'])
 def update_inventory(item_id):
     data = request.json
-    company_name = data.get("companyName")
+    admin_uid = request.headers.get("uid")
+    if not admin_uid:
+        return jsonify({"error": "Unauthorized: UID missing"}), 401
+
+    full_name, company_name = get_admin_info(admin_uid)
     if not company_name:
-        return jsonify({"error": "Company name is required"}), 400
+        return jsonify({"error": "Admin or company not found"}), 404
 
     try:
         inventory_ref = db.collection('companies').document(company_name).collection('inventory')
+        data["updated_by"] = full_name
         inventory_ref.document(item_id).update(data)
+        notify_company("Inventory Updated", f"Item {item_id} has been updated.", company_name)
         return jsonify({"message": "Item updated successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# Delete Inventory Item API
+# Delete Inventory Endpoint
 @app.route('/api/delete-inventory/<item_id>', methods=['DELETE'])
 def delete_inventory(item_id):
-    company_name = request.args.get('companyName')
+    admin_uid = request.headers.get("uid")
+    if not admin_uid:
+        return jsonify({"error": "Unauthorized: UID missing"}), 401
+
+    _, company_name = get_admin_info(admin_uid)
     if not company_name:
-        return jsonify({"error": "Company name is required"}), 400
+        return jsonify({"error": "Admin or company not found"}), 404
 
     try:
         inventory_ref = db.collection('companies').document(company_name).collection('inventory')
         inventory_ref.document(item_id).delete()
+        notify_company("Inventory Deleted", f"Item {item_id} has been deleted.", company_name)
         return jsonify({"message": "Item deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
     
+# --------------------------------------------------------------------------------
 # User Management APIs (Admin Only)
+# --------------------------------------------------------------------------------
 
-# Helper function to send emails (mock implementation)
+# Helper function to send emails 
 def send_email(to_email, subject, body):
     print(f"Email sent to {to_email}: {subject} - {body}")
 
@@ -655,53 +805,231 @@ def remove_user(uid):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    
+# Demote a user back to staff
+@app.route('/api/users/<uid>/demote', methods=['PUT'])
+def demote_user(uid):
+    try:
+        data = request.json
+        admin_uid = request.headers.get('uid')
+        company_name = request.headers.get('companyName')
+        if not company_name:
+            return jsonify({"error": "Company name header is required"}), 400
 
-# API to get reports
-@app.route('/reports', methods=['GET'])
+        admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
+        admin_data = admin_doc.to_dict()
+        if not admin_data:
+            return jsonify({"error": "Admin not found"}), 404
+
+        user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
+        user_data = user_doc.to_dict()
+        if not user_data:
+            return jsonify({"error": "User not found"}), 404
+
+        if user_data.get('role') != 'manager':
+            return jsonify({"error": "Only managers can be demoted to staff"}), 400
+
+        # Update the user's role to staff
+        db.collection('companies').document(company_name).collection('users').document(uid).update({"role": "staff"})
+
+        return jsonify({"message": "User demoted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --------------------------------------------------------------------------------
+# Reports and Analytics Section
+# -------------------------------------------------------------------------------- 
+
+# Get Reports
+@app.route('/api/reports', methods=['GET'])
 def get_reports():
     start_date = request.args.get('start')
     end_date = request.args.get('end')
-    report_type = request.args.get('type')
+    report_type = request.args.get('type')  
+    company_name = request.args.get('companyName')
+    if not (start_date and end_date and company_name):
+        return jsonify({"error": "Missing required parameters"}), 400
 
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    try:
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+    except Exception as e:
+        return jsonify({"error": "Invalid date format"}), 400
 
-    inventory_ref = db.collection('inventory')
-    query = inventory_ref.where('last_updated', '>=', start_dt).where('last_updated', '<=', end_dt)
+    inventory_ref = db.collection('companies').document(company_name).collection('inventory')
+    # Query inventory actions by added_at timestamp
+    query = inventory_ref.where('added_at', '>=', start_dt).where('added_at', '<=', end_dt)
+    try:
+        results = []
+        for doc in query.stream():
+            data = doc.to_dict()
+            data["id"] = doc.id
+            # convert Firestore Timestamp objects to a simpler dict format:
+            if "added_at" in data and hasattr(data["added_at"], "seconds"):
+                data["added_at"] = {"seconds": data["added_at"].seconds}
+            if "updated_at" in data and hasattr(data["updated_at"], "seconds"):
+                data["updated_at"] = {"seconds": data["updated_at"].seconds}
+            results.append(data)
+        return jsonify(results), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-    if report_type == 'low_stock':
-        query = query.where('stock', '<=', 5)
-    elif report_type == 'sales_trends':
-        query = query.order_by('sold', direction=firestore.Query.DESCENDING)
 
-    results = [doc.to_dict() for doc in query.stream()]
-    return jsonify(results)
-
-# API to get analytics
-@app.route('/analytics', methods=['GET'])
+# Get Analytics 
+@app.route('/api/analytics', methods=['GET'])
 def get_analytics():
     start_date = request.args.get('start')
     end_date = request.args.get('end')
+    company_name = request.args.get('companyName')
+    if not (start_date and end_date and company_name):
+        return jsonify({"error": "Missing required parameters"}), 400
+    try:
+        start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+    except Exception as e:
+        return jsonify({"error": "Invalid date format"}), 400
 
-    start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+    inventory_ref = db.collection('companies').document(company_name).collection('inventory')
+    query = inventory_ref.where('added_at', '>=', start_dt).where('added_at', '<=', end_dt)
+    total_stock = 0
+    total_sold = 0
+    items = []
+    try:
+        for doc in query.stream():
+            data = doc.to_dict()
+            total_stock += data.get('quantity', 0)
+            total_sold += data.get('sold', 0)
+            items.append(data)
+        top_selling = sorted(items, key=lambda x: x.get('sold', 0), reverse=True)[:5]
+        # Placeholder for a simple trend analysis (e.g., average stock change per day)
+        trend = "Trend analysis placeholder"  
+        analytics = {
+            "total_stock": total_stock,
+            "total_sold": total_sold,
+            "top_selling": top_selling,
+            "trend": trend
+        }
+        return jsonify(analytics), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
-    inventory_ref = db.collection('inventory')
-    query = inventory_ref.where('last_updated', '>=', start_dt).where('last_updated', '<=', end_dt)
+@app.route('/api/analytics-summary', methods=['GET'])
+def analytics_summary():
+    company_name = request.args.get('companyName')
+    if not company_name:
+        return jsonify({"error": "Company name is required"}), 400
 
-    inventory_data = [doc.to_dict() for doc in query.stream()]
+    try:
+        analytics = {
+            "stockTrends": [],
+            "top_selling": [],
+            "notifications": [],
+            "lowStock": [],
+            
+            "totalItems": 0,
+            "totalValue": 0.0,
+            "categoryCount": 0,
+            "categories": [],  
+            
+            "outOfStockCount": 0,
+            "avgPrice": 0.0,
+        }
 
-    # Sample Analytics Calculation
-    total_items = sum(item["stock"] for item in inventory_data)
-    top_selling = sorted(inventory_data, key=lambda x: x.get("sold", 0), reverse=True)[:5]
+        # Reference to inventory subcollection
+        inventory_ref = db.collection('companies').document(company_name).collection('inventory')
 
-    analytics = {
-        "total_stock": total_items,
-        "top_selling": top_selling,
-    }
+        items = []
+        stock_trends = []
 
-    return jsonify(analytics)
+        for doc in inventory_ref.stream():
+            data = doc.to_dict()
+            # For 'stockTrends' if "added_at" is present
+            if "added_at" in data:
+                try:
+                    # Firestore Timestamp => Python datetime
+                    timestamp = data["added_at"].timestamp()
+                    date_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+                except AttributeError:
+                    # If 'added_at' has .seconds
+                    date_str = datetime.fromtimestamp(data["added_at"].seconds).strftime("%Y-%m-%d")
+
+                stock_trends.append({
+                    "date": date_str,
+                    "stock": data.get("quantity", 0),
+                    "sold": data.get("sold", 0)
+                })
+            items.append(data)
+
+        # Save stockTrends in analytics
+        analytics["stockTrends"] = stock_trends
+
+        # Compute top_selling from items
+        top_selling = sorted(items, key=lambda x: x.get("sold", 0), reverse=True)[:5]
+        analytics["top_selling"] = top_selling
+
+        # Inventory summary fields
+        total_items = 0
+        total_value = 0.0
+        cat_dict = {}
+        out_of_stock_count = 0
+        prices = []  # for avg price
+
+        for it in items:
+            quantity = it.get("quantity", 0)
+            price = it.get("price", 0)
+            total_items += quantity
+            total_value += quantity * price
+
+            cat_name = it.get("category", "Uncategorized")
+            cat_dict[cat_name] = cat_dict.get(cat_name, 0) + 1
+
+            if quantity <= 0:
+                out_of_stock_count += 1
+            if "price" in it:
+                prices.append(price)
+
+        # Convert cat_dict => array of { name, count }
+        category_list = [{"name": k, "count": v} for k, v in cat_dict.items()]
+
+        avg_price = sum(prices) / len(prices) if prices else 0.0
+
+        analytics["totalItems"] = total_items
+        analytics["totalValue"] = total_value
+        analytics["categoryCount"] = len(category_list)
+        analytics["categories"] = category_list
+        analytics["outOfStockCount"] = out_of_stock_count
+        analytics["avgPrice"] = avg_price
+
+        # Low stock => threshold
+        low_stock_list = []
+        low_stock_query = inventory_ref.where("quantity", "<=", 5)
+        for doc in low_stock_query.stream():
+            d = doc.to_dict()
+            d["id"] = doc.id
+            low_stock_list.append(d)
+        analytics["lowStock"] = low_stock_list
+
+        # Fetch tasks => store them in analytics["notifications"]
+        tasks_ref = db.collection("companies").document(company_name).collection("tasks")
+        tasks_query = tasks_ref.order_by("createdAt", direction=firestore.Query.DESCENDING).limit(20)
+        tasks_snap = tasks_query.stream()
+
+        tasks_list = []
+        for tdoc in tasks_snap:
+            tdata = tdoc.to_dict()
+            tdata["id"] = tdoc.id
+            tasks_list.append(tdata)
+
+        analytics["notifications"] = tasks_list
+
+        # Return everything
+        return jsonify(analytics), 200
+
+    except Exception as e:
+        print("Error in analytics_summary:", str(e))
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
     app.run(debug=True, port=5000)
