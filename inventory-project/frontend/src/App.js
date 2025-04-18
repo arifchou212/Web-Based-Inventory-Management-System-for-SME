@@ -8,11 +8,11 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import InventoryPage from "./pages/InventoryPage";
 import ManageUsersPage from "./pages/ManageUsersPage";
-import SettingsPage from "./pages/SettingsPage";
 import ReportsPage from "./pages/ReportsAnalytics";
 import AuthPage from "./pages/AuthPage";
 import LandingPage from "./pages/LandingPage";
-import { ThemeProvider } from "./context/ThemeContext";
+import UnauthorisedPage from "./pages/UnauthorisedPage";
+import TasksNotificationsPage from "./pages/TasksNotificationsPage";
 
 function AppContent() {
   const location = useLocation();
@@ -28,7 +28,7 @@ function AppContent() {
   const userRole = user?.role || "staff";  
   console.log("Determined User Role in App:", userRole); // Debugging
 
-  const showSidebarRoutes = ["/dashboard", "/admin-dashboard", "/inventory", "/manage-users", "/settings", "/reports"];
+  const showSidebarRoutes = ["/dashboard", "/admin-dashboard", "/tasks", "/inventory", "/manage-users", "/reports"];
   const showSidebar = showSidebarRoutes.includes(location.pathname);
 
   return (
@@ -39,13 +39,13 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/auth" element={<AuthPage />} />
-
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["staff"]}><Dashboard /></ProtectedRoute>} />
           <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={["admin", "manager"]}><AdminDashboard /></ProtectedRoute>} />
           <Route path="/inventory" element={<ProtectedRoute allowedRoles={["admin", "manager"]}><InventoryPage /></ProtectedRoute>} />
+          <Route path="/tasks" element={<TasksNotificationsPage />} />
           <Route path="/manage-users" element={<ProtectedRoute allowedRoles={["admin"]}><ManageUsersPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/reports" element={<ProtectedRoute allowedRoles={["admin", "manager"]}><ReportsPage /></ProtectedRoute>} />
+          <Route path="/unauthorised" element={<UnauthorisedPage />} />
         </Routes>
       </div>
     </>
@@ -55,11 +55,9 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
       <Router>
         <AppContent />
       </Router>
-    </ThemeProvider>
   );
 }
 export default App;
