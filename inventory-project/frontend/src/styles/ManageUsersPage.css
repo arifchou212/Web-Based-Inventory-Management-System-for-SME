@@ -1,123 +1,193 @@
-/*  Manage Users Page */
+:root {
+  --primary-color: #2C3E50;       /* Dark Navy/Slate */
+  --accent-color: #C9A66B;        /* Golden Accent */
+  --background-color: #F9F7F1;    /* Light Beige BG */
+  --card-bg: #ffffff;             /* White Card BG */
+  --row-bg: #f9f9f9;              /* Light Grey Row BG */
+  --hover-bg: #ecf0f1;            /* Slightly Darker Grey on Hover */
+  --text-color: #333333;          /* Default Text Color */
+  --border-color: #E0E0E0;        /* Light Border */
+  --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+
+  --border-radius: 8px;
+  --spacing-xs: 5px;
+  --spacing-sm: 10px;
+  --spacing-md: 20px;
+  --spacing-lg: 30px;
+}
+
+/* Main Container */
 .manage-users {
-    padding: 20px;
-    margin-left: 220px; 
-    margin-top: 60px; 
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5; 
-    min-height: calc(100vh - 60px);
+  margin-top: 60px;
+  margin-left: 220px;
+  background: #F9F7F1;
+  min-height: calc(100vh - 60px);
+  padding: var(--spacing-md);
+  box-sizing: border-box;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Page Title */
+.manage-users h1 {
+  color: var(--primary-color);
+  font-size: 2.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 0 0 var(--spacing-md) 0;
+  letter-spacing: 1px;
+  border-bottom: 4px solid var(--accent-color);
+  padding-bottom: var(--spacing-sm);
+}
+
+/* Loading & Error Messages */
+.manage-users p {
+  font-size: 1rem;
+  color: #333333;
+}
+
+.manage-users .error {
+  color: #ba1f33;
+  font-weight: 600;
+  margin-top: var(--spacing-sm);
+}
+
+/* Users Table */
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Table Header */
+.users-table thead {
+  background: var(--primary-color);
+}
+
+.users-table th {
+  background: var(--primary-color);
+  color: white;
+  padding: var(--spacing-sm);
+  text-align: center;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+}
+
+/* Table Data */
+.users-table tbody tr {
+  background: var(--row-bg); /* Light Grey Background */
+}
+
+.users-table td {
+  padding: var(--spacing-sm);
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  color: #333333;
+}
+
+/* Hover Effect */
+.users-table tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+/* Fix focus and active state */
+.users-table tbody tr:focus,
+.users-table tbody tr:active,
+.users-table tbody tr:focus-visible,
+.users-table tbody tr:target,
+.users-table tbody tr:checked {
+  background: var(--row-bg) !important;
+  outline: none;
+}
+
+/* Role-based styling */
+.role-manager {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.role-staff {
+  color: #3498db;
+  font-weight: 600;
+}
+
+.role-admin {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.btn-promote, .btn-remove, .btn-demote {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Promote Button */
+.btn-promote {
+  background-color: var(--accent-color);
+  color: var(--primary-color);
+}
+
+
+.btn-promote:hover {
+  background-color: #bfa06f;
+  transform: translateY(-2px);
+}
+
+ .btn-demote {
+  background-color: #e68313; 
+  color: var(--primary-color);
+} 
+
+.btn-demote:hover {
+  background-color: #d37320;
+  transform: translateY(-2px);
+}
+
+
+/* Remove Button */
+.btn-remove {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+.btn-remove:hover {
+  background-color: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* Icons inside buttons */
+.btn-promote svg, .btn-remove svg {
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .users-table th, .users-table td {
+    font-size: 0.85rem;
+    padding: 8px;
   }
-  
-  /*  Header */
-  h1 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
+
+  .manage-users {
+    margin-left: 0;
+    padding: var(--spacing-sm);
   }
-  
-  /*  Users Table */
-  .users-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: white; 
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
-    border-radius: 8px;
-    overflow: hidden;
+
+  .manage-users h1 {
+    font-size: 2rem;
   }
-  
-  .users-table th, 
-  .users-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-    color: black;
-  }
-  
-  .users-table th {
-    background-color: #007bff;
-    color: white;
-    text-transform: uppercase;
-  }
-  
-  .users-table tr:nth-child(even) {
-    background-color: #f9f9f9; 
-  }
-  
-  .users-table tr:hover {
-    background-color: #f1f1f1;
-  }
-  
-  /* 🔹 Status Styling */
-  .status-pending {
-    color: orange;
-    font-weight: bold;
-  }
-  
-  .status-active {
-    color: green;
-    font-weight: bold;
-  }
-  
-  /*  Buttons */
-  .btn-approve, .btn-promote, .btn-remove {
-    padding: 8px 12px;
-    margin: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 5px; /* Adds spacing between icon & text */
-    border-radius: 5px;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    font-weight: bold;
-  }
-  
-  /*  Approve Button */
-  .btn-approve {
-    background-color: #28a745;
-    color: white;
-  }
-  .btn-approve:hover {
-    background-color: #1e7e34 !important;
-    box-shadow: 0px 4px 6px rgba(40, 167, 69, 0.3);
-  }
-  
-  /*  Promote Button */
-  .btn-promote {
-    background-color: #ffc107;
-    color: black;
-  }
-  .btn-promote:hover {
-    background-color: #e0a800 !important;
-    box-shadow: 0px 4px 6px rgba(255, 193, 7, 0.3);
-  }
-  
-  /*  Remove Button */
-  .btn-remove {
-    background-color: #dc3545;
-    color: white;
-  }
-  .btn-remove:hover {
-    background-color: #c82333 !important;
-    box-shadow: 0px 4px 6px rgba(220, 53, 69, 0.3);
-  }
-  
-  /*  Responsive Adjustments */
-  @media (max-width: 768px) {
-    .manage-users {
-      margin-left: 0;
-      padding: 10px;
-    }
-  
-    .users-table th, .users-table td {
-      padding: 8px;
-      font-size: 14px;
-    }
-  
-    .btn-approve, .btn-promote, .btn-remove {
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-  }
+}
