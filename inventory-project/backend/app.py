@@ -7,10 +7,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 from functools import wraps
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, g
 from flask_cors import CORS
 from dotenv import load_dotenv
 from twilio.rest import Client
+from google.cloud.firestore_v1 import DocumentSnapshot
 
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -420,6 +421,13 @@ def google_signin():
             last_name=last_name,
             status="active"
         )
+        
+        # Send a “verification” or welcome email now that we have their extra info:
+        verification_link = auth.generate_email_verification_link(email)
+        send_verification_email(
+            to_email= email,
+            verification_link= verification_link
+        )
 
         # Generate a JWT token
         token = generate_jwt(uid, role, company_name)
@@ -457,7 +465,7 @@ def forgot_password():
         print("Forgot Password error:", str(e))
         return jsonify({"error": str(e)}), 500
     
-# --------------------------------------------------------------------------------   
+# -------------------------------------------------------------------------------- 
 # Inventory Section
 # --------------------------------------------------------------------------------
 
@@ -563,7 +571,9 @@ def upload_csv():
                     "price_diff": price_diff,
                     "price_change": price_change,
                     "updated_at": firestore.SERVER_TIMESTAMP,
-                    "updated_by": uploader
+                    "updated_by": uploader,
+                    "added_at": firestore.SERVER_TIMESTAMP,
+                    "updated_at": firestore.SERVER_TIMESTAMP
                 })
             else:
                 new_item = {
@@ -662,7 +672,7 @@ def update_inventory(item_id):
     data = request.json
     admin_uid = request.headers.get("uid")
     if not admin_uid:
-        return jsonify({"error": "Unauthorized: UID missing"}), 401
+        return jsonify({"error": "Unauthorised: UID missing"}), 401
 
     full_name, company_name = get_admin_info(admin_uid)
     if not company_name:
@@ -703,138 +713,145 @@ def delete_inventory(item_id):
 # Helper function to send emails 
 def send_email(to_email, subject, body):
     print(f"Email sent to {to_email}: {subject} - {body}")
+    
+def require_firebase_auth(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        auth_header = request.headers.get("Authorization", "")
+        parts = auth_header.split()
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            return jsonify({"error":"Missing or invalid Authorization header"}), 401
+        id_token = parts[1]
+        try:
+            decoded = auth.verify_id_token(id_token)
+        except Exception as e:
+            return jsonify({"error":"Invalid or expired token"}), 401
+        # stash the uid
+        g.admin_uid = decoded["uid"]
+        return fn(*args, **kwargs)
+    return wrapper
 
 # Get all users for the admin's company
 @app.route('/api/users', methods=['GET'])
+@require_firebase_auth
 def get_users():
-    try:
-        # Get admin UID and companyName from headers (or query parameters)
-        admin_uid = request.headers.get('uid')
-        company_name = request.headers.get('companyName')  # Ensure you pass this from the frontend
+    company_name = request.headers.get('companyName')
+    if not company_name:
+        return jsonify({"error": "Company name is required"}), 400
 
-        print("Incoming headers:", request.headers)  # For debugging
+    admin_uid = g.admin_uid
+    admin_doc = (
+        db.collection('companies')
+          .document(company_name)
+          .collection('users')
+          .document(admin_uid)
+          .get()
+    )
+    if not admin_doc.exists:
+        return jsonify({"error": "Admin not found"}), 404
 
-        if not admin_uid:
-            return jsonify({"error": "Unauthorized"}), 401
-        if not company_name:
-            return jsonify({"error": "Company name is required"}), 400
-
-        # Get the admin's document from the company subcollection
-        admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
-        admin_data = admin_doc.to_dict()
-        if not admin_data:
-            return jsonify({"error": "Admin not found"}), 404
-
-        # Fetch all users from the same company subcollection
-        users_ref = db.collection('companies').document(company_name).collection('users')
-        users = users_ref.stream()
-        user_list = [{**user.to_dict(), 'id': user.id} for user in users]
-        return jsonify(user_list), 200
-    except Exception as e:
-        print("Error fetching users:", str(e))
-        return jsonify({"error": str(e)}), 500
+    users = db.collection('companies') \
+              .document(company_name) \
+              .collection('users') \
+              .stream()
+    user_list = [{**u.to_dict(), 'id': u.id} for u in users]
+    return jsonify(user_list), 200
 
 
 # Promote a user to manager
 @app.route('/api/users/<uid>/promote', methods=['PUT'])
+@require_firebase_auth
 def promote_user(uid):
-    try:
-        data = request.json
-        #admin_password = data.get('password')  # Admin's password for confirmation
-        admin_uid = request.headers.get('uid')
-        company_name = request.headers.get('companyName')
-        if not company_name:
-            return jsonify({"error": "Company name header is required"}), 400
+    company_name = request.headers.get('companyName')
+    if not company_name:
+        return jsonify({"error": "Company name header is required"}), 400
 
-        # Get admin document from the company subcollection
-        admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
-        admin_data = admin_doc.to_dict()
-        if not admin_data:
-            return jsonify({"error": "Admin not found"}), 404
+    admin_uid = g.admin_uid
+    admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
+    if not admin_doc.exists:
+        return jsonify({"error": "Admin not found"}), 404
 
-        #if admin_data.get('password') != admin_password:
-        #    return jsonify({"error": "Invalid password"}), 401
+    user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
+    if not user_doc.exists:
+        return jsonify({"error": "User not found"}), 404
 
-        # Get the target user from the same subcollection
-        user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
-        user_data = user_doc.to_dict()
-        if not user_data:
-            return jsonify({"error": "User not found"}), 404
+    if user_doc.to_dict().get('role') != 'staff':
+        return jsonify({"error": "Only staff can be promoted"}), 400
 
-        if user_data.get('role') != 'staff':
-            return jsonify({"error": "Only staff can be promoted to manager"}), 400
+    db.collection('companies')\
+      .document(company_name)\
+      .collection('users')\
+      .document(uid)\
+      .update({"role": "manager"})
 
-        # Update the user's role
-        db.collection('companies').document(company_name).collection('users').document(uid).update({"role": "manager"})
-        send_email(user_data.get('email'), "Promotion to Manager", "Congratulations on your promotion!")
-        return jsonify({"message": "User promoted successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    send_email(user_doc.to_dict().get('email'),
+               "Promotion to Manager",
+               "Congratulations on your promotion!")
+    return jsonify({"message": "User promoted successfully"}), 200
 
 
 # Remove a user from the company
 @app.route('/api/users/<uid>/remove', methods=['DELETE'])
+@require_firebase_auth
 def remove_user(uid):
-    try:
-        data = request.json
-        #admin_password = data.get('password')
-        admin_uid = request.headers.get('uid')
-        company_name = request.headers.get('companyName')
-        if not company_name:
-            return jsonify({"error": "Company name header is required"}), 400
+    company_name = request.headers.get('companyName')
+    if not company_name:
+        return jsonify({"error": "Company name header is required"}), 400
 
-        admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
-        admin_data = admin_doc.to_dict()
-        if not admin_data:
-            return jsonify({"error": "Admin not found"}), 404
+    admin_uid = g.admin_uid
+    admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
+    if not admin_doc.exists:
+        return jsonify({"error": "Admin not found"}), 404
 
-        #if admin_data.get('password') != admin_password:
-        #    return jsonify({"error": "Invalid password"}), 401
+    user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
+    if not user_doc.exists:
+        return jsonify({"error": "User not found"}), 404
 
-        user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
-        user_data = user_doc.to_dict()
-        if not user_data:
-            return jsonify({"error": "User not found"}), 404
+    if user_doc.to_dict().get('role') == 'admin':
+        return jsonify({"error": "Cannot remove the admin user"}), 400
 
-        if user_data.get('role') == 'admin':
-            return jsonify({"error": "Cannot remove the admin user"}), 400
+    db.collection('companies')\
+      .document(company_name)\
+      .collection('users')\
+      .document(uid)\
+      .delete()
 
-        db.collection('companies').document(company_name).collection('users').document(uid).delete()
-        send_email(user_data.get('email'), "Removed from Company", "You have been removed from the company.")
-        return jsonify({"message": "User removed successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    send_email(user_doc.to_dict().get('email'),
+               "Removed from Company",
+               "You have been removed from the company.")
+    return jsonify({"message": "User removed successfully"}), 200
 
     
 # Demote a user back to staff
 @app.route('/api/users/<uid>/demote', methods=['PUT'])
+@require_firebase_auth
 def demote_user(uid):
-    try:
-        data = request.json
-        admin_uid = request.headers.get('uid')
-        company_name = request.headers.get('companyName')
-        if not company_name:
-            return jsonify({"error": "Company name header is required"}), 400
+    company_name = request.headers.get('companyName')
+    if not company_name:
+        return jsonify({"error": "Company name header is required"}), 400
 
-        admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
-        admin_data = admin_doc.to_dict()
-        if not admin_data:
-            return jsonify({"error": "Admin not found"}), 404
+    admin_uid = g.admin_uid
+    admin_doc = db.collection('companies').document(company_name).collection('users').document(admin_uid).get()
+    if not admin_doc.exists:
+        return jsonify({"error": "Admin not found"}), 404
 
-        user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
-        user_data = user_doc.to_dict()
-        if not user_data:
-            return jsonify({"error": "User not found"}), 404
+    user_doc = db.collection('companies').document(company_name).collection('users').document(uid).get()
+    if not user_doc.exists:
+        return jsonify({"error": "User not found"}), 404
 
-        if user_data.get('role') != 'manager':
-            return jsonify({"error": "Only managers can be demoted to staff"}), 400
+    if user_doc.to_dict().get('role') != 'manager':
+        return jsonify({"error": "Only managers can be demoted"}), 400
 
-        # Update the user's role to staff
-        db.collection('companies').document(company_name).collection('users').document(uid).update({"role": "staff"})
+    db.collection('companies')\
+      .document(company_name)\
+      .collection('users')\
+      .document(uid)\
+      .update({"role": "staff"})
 
-        return jsonify({"message": "User demoted successfully"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    send_email(user_doc.to_dict().get('email'),
+               "Demoted to Staff",
+               "You have been demoted to staff.")
+    return jsonify({"message": "User demoted successfully"}), 200
 
 # --------------------------------------------------------------------------------
 # Reports and Analytics Section
@@ -843,37 +860,60 @@ def demote_user(uid):
 # Get Reports
 @app.route('/api/reports', methods=['GET'])
 def get_reports():
-    start_date = request.args.get('start')
-    end_date = request.args.get('end')
-    report_type = request.args.get('type')  
-    company_name = request.args.get('companyName')
-    if not (start_date and end_date and company_name):
-        return jsonify({"error": "Missing required parameters"}), 400
+    start_date = request.args.get('start')       # e.g. "2025-04-16"
+    end_date   = request.args.get('end')         # e.g. "2025-04-22"
+    company    = request.args.get('companyName')
+    if not (start_date and end_date and company):
+        return jsonify({"error":"Missing required parameters"}), 400
 
+    # parse + extend end_dt by one full day
     try:
         start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
-    except Exception as e:
-        return jsonify({"error": "Invalid date format"}), 400
+        end_dt   = datetime.strptime(end_date,   '%Y-%m-%d') + timedelta(days=1)
+    except ValueError:
+        return jsonify({"error":"Invalid date format"}), 400
 
-    inventory_ref = db.collection('companies').document(company_name).collection('inventory')
-    # Query inventory actions by added_at timestamp
-    query = inventory_ref.where('added_at', '>=', start_dt).where('added_at', '<=', end_dt)
-    try:
-        results = []
-        for doc in query.stream():
-            data = doc.to_dict()
-            data["id"] = doc.id
-            # convert Firestore Timestamp objects to a simpler dict format:
-            if "added_at" in data and hasattr(data["added_at"], "seconds"):
-                data["added_at"] = {"seconds": data["added_at"].seconds}
-            if "updated_at" in data and hasattr(data["updated_at"], "seconds"):
-                data["updated_at"] = {"seconds": data["updated_at"].seconds}
-            results.append(data)
-        return jsonify(results), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    inv_ref   = db.collection('companies').document(company).collection('inventory')
 
+    # fetch adds & updates separately
+    added_q   = inv_ref.where('added_at',   '>=', start_dt).where('added_at',   '<', end_dt)
+    updated_q = inv_ref.where('updated_at', '>=', start_dt).where('updated_at', '<', end_dt)
+
+    seen = set()
+    results = []
+
+    #  newly added items
+    for snap in added_q.stream():
+        d = snap.to_dict()
+        d['id']      = snap.id
+        d['_action'] = 'added'
+        results.append(d)
+        seen.add(snap.id)
+
+    #  updated items (skip ones we already included)
+    for snap in updated_q.stream():
+        if snap.id in seen: 
+            continue
+        d = snap.to_dict()
+        d['id']      = snap.id
+        d['_action'] = 'updated'
+        results.append(d)
+        seen.add(snap.id)
+
+    #  normalize all timestamp fields into ISO strings
+    for d in results:
+        for fld in ('added_at','updated_at'):
+            ts = d.get(fld)
+            if isinstance(ts, datetime):
+                d[fld] = ts.isoformat()
+            elif hasattr(ts, 'to_datetime'):   # google.cloud.Timestamp
+                d[fld] = ts.to_datetime().isoformat()
+            elif hasattr(ts, 'ToDatetime'):     # protobuf Timestamp
+                d[fld] = ts.ToDatetime().isoformat()
+            else:
+                d[fld] = None
+
+    return jsonify(results), 200
 
 # Get Analytics 
 @app.route('/api/analytics', methods=['GET'])
