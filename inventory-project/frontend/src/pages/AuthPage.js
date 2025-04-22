@@ -8,6 +8,7 @@ import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import ReactDOM from "react-dom"; 
 import "../styles/AuthPage.css";
 
+
 const AuthPage = () => {
   const {user} = useAuth();
   // Toggle: login or signup
