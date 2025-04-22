@@ -301,7 +301,3 @@ Pull requests are welcome. For significant changes, open an issue to discuss the
 ```
 
 ---
-
-✅ You can now copy and paste this entire thing directly into your `README.md`.
-
-Let me know if you'd like a matching `.gitignore`, sample `.env.example`, or starter `firebase.js`.
