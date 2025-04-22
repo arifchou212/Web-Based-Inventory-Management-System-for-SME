@@ -61,7 +61,7 @@ Firebase CLI          # (Optional) For Firebase functions
 
 ```bash
 git clone https://campus.cs.le.ac.uk/gitlab/ug_project/24-25/ac896.git
-cd inventory-project
+cd ac896/inventory-project
 ```
 
 ---
