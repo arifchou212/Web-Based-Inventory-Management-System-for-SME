@@ -1,117 +1,126 @@
 import React, { useState, useEffect } from 'react';
-import { getUsers, promoteUser, removeUser, demoteUser, getActivityLogs } from '../api';
+import axios from 'axios';
+import { getAuth, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { FaUserShield, FaTrash } from 'react-icons/fa';
 import "../styles/ManageUsersPage.css";
 
 const ManageUsersPage = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers]     = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  // Retrieve admin UID and company name from localStorage (set during login/signup)
-  const adminUid = localStorage.getItem('uid');
+  const [error, setError]     = useState(null);
+
   const companyName = localStorage.getItem('company');
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
-      const userData = await getUsers(adminUid, companyName);
-      setUsers(userData);
-      setLoading(false);
+      const idToken = await getAuth().currentUser.getIdToken();
+      const res = await axios.get('/api/users', {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+           companyName
+        }
+      });
+      setUsers(res.data);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message);
+    } finally {
       setLoading(false);
     }
+  }
+
+  async function withReauthAndApi(actionFn) {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    const password = prompt('Please re‑enter your password to confirm:');
+    if (!password) return;
+
+    // reauthenticate
+    const cred = EmailAuthProvider.credential(user.email, password);
+    try {
+      await reauthenticateWithCredential(user, cred);
+    } catch {
+      return alert('❌ Password incorrect — action aborted.');
+    }
+
+    // fresh ID token
+    const idToken = await user.getIdToken(true);
+
+    try {
+      await actionFn(idToken);
+      alert('✅ Action completed successfully.');
+      fetchUsers();
+    } catch (err) {
+      alert('❌ Failed: ' + (err.response?.data?.error || err.message));
+    }
+  }
+
+  const handlePromote = (targetUid) => {
+    withReauthAndApi(idToken =>
+      axios.put(`/api/users/${targetUid}/promote`, {}, {
+        headers: { Authorization: `Bearer ${idToken}`, companyName }
+      })
+    );
   };
 
-  const handlePromote = async (userId, userEmail) => {
-    const password = prompt("Enter your password to confirm promotion:");
-    if (!password) return;
-    if (window.confirm("Are you sure you want to promote this user to Manager?")) {
-      try {
-        await promoteUser(userId, password, adminUid, companyName);
-        alert("User promoted successfully.");
-        fetchUsers();
-      } catch (error) {
-        alert("Failed to promote user: " + error.message);
-      }
-    }
+  const handleDemote = (targetUid) => {
+    withReauthAndApi(idToken =>
+      axios.put(`/api/users/${targetUid}/demote`, {}, {
+        headers: { Authorization: `Bearer ${idToken}`, companyName }
+      })
+    );
   };
 
-  const handleDemote = async (userId, userEmail) => {
-    const password = prompt("Enter your password to confirm demotion:");
-    if (!password) return;
-    if (window.confirm("Are you sure you want to demote this manager to staff?")) {
-      try {
-        await demoteUser(userId, password, adminUid, companyName);
-        alert("User demoted successfully.");
-        fetchUsers(); // refresh user list
-      } catch (error) {
-        alert("Failed to demote user: " + error.message);
-      }
-    }
+  const handleRemove = (targetUid) => {
+    withReauthAndApi(idToken =>
+      axios.delete(`/api/users/${targetUid}/remove`, {
+        headers: { Authorization: `Bearer ${idToken}`, companyName }
+      })
+    );
   };
-  
 
-  const handleRemove = async (userId, userEmail) => {
-    const password = prompt("Enter your password to confirm removal:");
-    if (!password) return;
-    if (window.confirm("Are you sure you want to remove this user? This action is irreversible.")) {
-      try {
-        await removeUser(userId, password, adminUid, companyName);
-        alert("User removed successfully.");
-        fetchUsers();
-      } catch (error) {
-        alert("Failed to remove user: " + error.message);
-      }
-    }
-  };
+  if (loading) return <p>Loading users…</p>;
+  if (error)   return <p className="error">{error}</p>;
 
   return (
     <div className="manage-users">
       <h1>Manage Users</h1>
-      {loading ? <p>Loading users...</p> : error ? <p className="error">{error}</p> : (
-        <table className="users-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id}>
-                <td>{user.firstName} {user.lastName}</td>
-                <td>{user.email}</td>
-                <td className={`role-${user.role}`}>{user.role}</td>
-                <td>
-                {user.role === 'staff' && (
-                  <button className="btn-promote" onClick={() => handlePromote(user.id, user.email)}>
+      <table className="users-table">
+        <thead>
+          <tr>
+            <th>Name</th><th>Email</th><th>Role</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(u => (
+            <tr key={u.id}>
+              <td>{u.firstName} {u.lastName}</td>
+              <td>{u.email}</td>
+              <td>{u.role}</td>
+              <td>
+                {u.role === 'staff' && (
+                  <button onClick={() => handlePromote(u.id)} className="btn-promote">
                     <FaUserShield /> Promote
                   </button>
                 )}
-                {user.role === 'manager' && (
-                  <button className="btn-demote" onClick={() => handleDemote(user.id, user.email)}>
+                {u.role === 'manager' && (
+                  <button onClick={() => handleDemote(u.id)} className="btn-demote">
                     Demote
                   </button>
                 )}
-                {user.role !== 'admin' && (
-                  <button className="btn-remove" onClick={() => handleRemove(user.id, user.email)}>
+                {u.role !== 'admin' && (
+                  <button onClick={() => handleRemove(u.id)} className="btn-remove">
                     <FaTrash /> Remove
                   </button>
                 )}
               </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
