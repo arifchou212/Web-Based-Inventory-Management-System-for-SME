@@ -37,6 +37,19 @@ function formatNumber(value) {
 }
 
 const AdminDashboard = ({ userRole }) => {
+
+    // color-coded background based on urgency
+    const getUrgencyStyle = (urg) => {
+      switch (urg) {
+        case "high":
+          return { backgroundColor: "#ffdddd" }; // red-ish
+        case "medium":
+          return { backgroundColor: "#fff5cc" }; // yellow-ish
+        default:
+          return { backgroundColor: "#ddffdd" }; // green-ish
+      }
+    };
+  
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -226,13 +239,18 @@ const AdminDashboard = ({ userRole }) => {
               ) : (
                 <>
                   <ul>
-                    {displayedNotifications.map((note, idx) => (
-                      <li key={note.id || idx}>
-                        <strong>{note.title}</strong> - {note.urgency}
-                        <br />
-                        {note.description}
-                      </li>
-                    ))}
+                  {displayedNotifications.map((note, idx) => (
+                    <li
+                      key={note.id || idx}
+                      style={getUrgencyStyle(note.urgency)}
+                      className="notification-item"
+                    >
+                      <strong>
+                        {note.title} ({note.urgency})
+                      </strong>
+                      <p>{note.description}</p>
+                    </li>
+                  ))}
                   </ul>
                   {sortedNotifications.length > 3 && (
                     <div className="show-more-btn-container">
