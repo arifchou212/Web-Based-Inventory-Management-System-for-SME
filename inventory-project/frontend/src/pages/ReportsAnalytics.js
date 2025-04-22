@@ -37,8 +37,15 @@ ChartJS.register(
 
 const ReportsAnalytics = () => {
   // State Hooks
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(
+    () => new Date(Date.now() - 7*24*60*60*1000)
+  );
+  const [endDate, setEndDate] = useState(() => new Date());
+
+  useEffect(() => {
+     handleGenerateReport();
+  }, []);
+
   const [reportType, setReportType] = useState("inventory_actions");
   const [reports, setReports] = useState([]);
   const [analytics, setAnalytics] = useState({});
@@ -58,12 +65,12 @@ const ReportsAnalytics = () => {
   const lineChartRef = useRef(null);
   const barChartRef = useRef(null);
 
-  useEffect(() => {
-    if (autoRefresh) {
-      const interval = setInterval(handleGenerateReport, 30000); // e.g. 30s
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh]);
+  // useEffect(() => {
+  //   if (autoRefresh) {
+  //     const interval = setInterval(handleGenerateReport, 30000); 
+  //     return () => clearInterval(interval);
+  //   }
+  // }, [autoRefresh]);
 
   const handleDateRangePresetChange = (preset) => {
     setDateRangePreset(preset);
@@ -152,130 +159,136 @@ const ReportsAnalytics = () => {
   };
 
   const exportPDF = () => {
-    const doc = new jsPDF();
-    // Title section
-    doc.setFontSize(22);
-    doc.setTextColor(33, 37, 41);
-    doc.text("Inventory Analysis Report", 14, 25);
+    const doc = new jsPDF({ unit: "pt", format: "letter" });
+    const title     = "Inventory Analysis Report";
+    const company   = localStorage.getItem("company") || "Your Company";
+    const rangeText = `${startDate.toLocaleDateString()} – ${endDate.toLocaleDateString()}`;
+    const nowText   = new Date().toLocaleString();
+  
+    // ─── Cover Page ─────────────────────────────────────────────────────────────
+    doc.setFontSize(28);
+    doc.text(title, 40, 80);
     doc.setFontSize(16);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 35);
-    doc.setFontSize(12);
-    doc.text(
-      "This report provides detailed insights into inventory actions, sales trends, and stock levels. It includes a data table along with graphical analysis for informed decision-making.",
-      14,
-      45,
-      { maxWidth: 180 }
-    );
-    // Draw a separator line
-    doc.setLineWidth(0.5);
-    doc.line(14, 50, 196, 50);
-
-    // Prepare table headers and data
-    const tableHeaders = [
-      [
-        "Item Name",
-        "Quantity",
-        "Sold",
-        "Added At",
-        "Added By",
-        "Updated At",
-        "Updated By",
-        "Price Change",
-      ],
+    doc.text(`Company: ${company}`, 40, 120);
+    doc.text(`Date Range: ${rangeText}`, 40, 145);
+    doc.text(`Generated: ${nowText}`, 40, 170);
+    addFooter(doc, 1);
+    doc.addPage();
+  
+    // ─── Data Table ──────────────────────────────────────────────────────────────
+    const headers = [
+      ["Item", "Qty", "Sold", "Added At", "Added By", "Updated At", "Updated By", "Δ Price"],
     ];
-
-    const tableData = reports.map((item) => {
-      const addedAt =
-        item.added_at && item.added_at.seconds
-          ? new Date(item.added_at.seconds * 1000).toLocaleString()
-          : "N/A";
-      const updatedAt =
-        item.updated_at && item.updated_at.seconds
-          ? new Date(item.updated_at.seconds * 1000).toLocaleString()
-          : "N/A";
-          const priceDiff = Number(item.price_diff || 0).toFixed(2);
-          const priceChange =
-            item.price_change === "increase"
-              ? `+${priceDiff}`
-              : item.price_change === "decrease"
-              ? `${priceDiff}`
-              : "0.00";
-
+    const body = reports.map((it) => {
+      const a = it.added_at   ? new Date(it.added_at).toLocaleString()   : "N/A";
+      const u = it.updated_at ? new Date(it.updated_at).toLocaleString() : "N/A";
+      const pd = Number(it.price_diff || 0).toFixed(2);
+      const ch = it.price_change === "increase" ? `+${pd}`
+               : it.price_change === "decrease" ? `-${pd}` 
+               : "0.00";
       return [
-        item.name,
-        item.quantity,
-        item.sold,
-        addedAt,
-        item.added_by || "N/A",
-        updatedAt,
-        item.updated_by || "N/A",
-        priceChange,
+        it.name, it.quantity, it.sold, a, it.added_by||"N/A",
+        u,       it.updated_by||"N/A", ch
       ];
     });
-
-    // Use autoTable from jspdf-autotable
+  
     doc.autoTable({
-      startY: 55,
-      head: tableHeaders,
-      body: tableData,
+      startY: 40,
+      head: headers,
+      body,
       theme: "grid",
-      headStyles: { fillColor: 16, textColor: 240 },
-      styles: { font: "helvetica", fontSize: 10 },
+      headStyles: { fillColor: [50, 50, 120], textColor: 255 },
+      styles: { fontSize: 10 },
+      didParseCell: (cell) => {
+        // highlight low-stock rows
+        if (cell.section === "body" && cell.column.index === 1 && cell.cell.raw <= 5) {
+          cell.cell.styles.fillColor = [255, 220, 220];
+        }
+      }
     });
-
- // Get the end Y coordinate of the table.
-  const tableEndY = doc.lastAutoTable.finalY || 55;
-
-  // Embed the line chart snapshot
-  if (lineChartRef.current && lineChartRef.current.canvas) {
-    const lineImgData = lineChartRef.current.canvas.toDataURL("image/png", 1.0);
-    // Insert a new page for charts if desired
+  
+    addFooter(doc, 2);
     doc.addPage();
-    doc.addImage(lineImgData, "PNG", 15, 25, 180, 80);
-  }
-  // Embed the bar chart snapshot
-  if (barChartRef.current && barChartRef.current.canvas) {
-    doc.addPage();
-    const barImgData = barChartRef.current.canvas.toDataURL("image/png", 1.0);
-    doc.addImage(barImgData, "PNG", 15, 25, 180, 80);
-  }
-
-  // ANALYSIS SECTION
-  const analysisText = `
-    Total Stock: ${analytics.total_stock || 0}
-    Total Sold: ${analytics.total_sold || 0}
-    Top Selling: ${
-        analytics.top_selling && analytics.top_selling.length > 0
-          ? analytics.top_selling[0].name
-          : "N/A"
-    }
-    Recommendations: ${
-        analytics.trend ? analytics.trend : "No trend analysis available."
-    }
-      `;
+  
+    // ─── Charts Pages ───────────────────────────────────────────────────────────
+    if (lineChartRef.current) {
+      const img1 = lineChartRef.current.canvas.toDataURL("image/png", 1.0);
+      doc.addImage(img1, "PNG", 40, 40, 520, 260);
+      addFooter(doc, 3);
       doc.addPage();
-      doc.setFontSize(14);
-      doc.text("Analysis & Recommendations", 14, 25);
-      doc.setFontSize(12);
-      doc.text(analysisText, 14, 35);
+    }
+    if (barChartRef.current) {
+      const img2 = barChartRef.current.canvas.toDataURL("image/png", 1.0);
+      doc.addImage(img2, "PNG", 40, 40, 520, 260);
+      addFooter(doc, 4);
+      doc.addPage();
+    }
+  
+    // ─── Recommendations & Next Steps ──────────────────────────────────────────
+    const recs = buildRecommendations(analytics, 5); // threshold = 5
+    doc.setFontSize(16);
+    doc.text("Recommendations & Next Steps", 40, 60);
+    doc.setFontSize(12);
+    let y = 90;
+    recs.forEach((r) => {
+      doc.text(`• ${r}`, 60, y);
+      y += 18;
+      if (y > 720) {
+        // overflow to new page
+        addFooter(doc);
+        doc.addPage();
+        doc.setFontSize(12);
+        y = 60;
+      }
+    });
+    addFooter(doc);
+    
+    doc.save(`inventory_report_${new Date().toISOString()}.pdf`);
+  };
 
-      // Save the PDF.
-      doc.save(`inventory_analysis_report_${new Date().toISOString()}.pdf`);
-    };
+
+  function buildRecommendations(analytics, reorderThreshold=5) {
+    const recs = [];
+    const low = (analytics.lowStock || [])
+      .filter(i => i.quantity <= reorderThreshold)
+      .map(i => i.name);
+    if (low.length) {
+      recs.push(`Reorder soon: ${low.join(", ")}`);
+    }
+    if ((analytics.total_sold||0) === 0) {
+      recs.push("No sales recorded—consider a promotion or review sales channels.");
+    }
+    if (analytics.top_selling && analytics.top_selling.length) {
+      recs.push(`Top seller: ${analytics.top_selling[0].name}—consider bundling/upselling.`);
+    }
+    if (!recs.length) {
+      recs.push("No specific recommendations at this time.");
+    }
+    return recs;
+  }
+  
+  /** Draw “Page X of Y” in the footer */
+  function addFooter(doc, pageNum=null) {
+    const total = doc.getNumberOfPages();
+    const p = pageNum || doc.getCurrentPageInfo().pageNumber;
+    doc.setFontSize(10);
+    doc.text(
+      `Page ${p} of ${total}`,
+      doc.internal.pageSize.width - 80,
+      doc.internal.pageSize.height - 30
+    );
+  }
 
   /* -----------------------------
    * Chart Data
    * ----------------------------- */
   const sortedReports = [...reports].sort((a, b) => {
-    if (a.added_at && b.added_at) {
-      return a.added_at.seconds - b.added_at.seconds;
-    }
-    return 0;
+    return new Date(a.added_at || 0) - new Date(b.added_at || 0);
   });
 
   const lineChartData = {
-    labels: sortedReports.map((item) =>
-      item.added_at ? new Date(item.added_at.seconds * 1000).toLocaleDateString() : "N/A"
+    labels: reports.map(r =>
+      r.added_at ? new Date(r.added_at).toLocaleDateString() : ""
     ),
     datasets: [
       {
@@ -486,10 +499,10 @@ const ReportsAnalytics = () => {
               <tbody>
                 {reports.map((item, idx) => {
                   const addedAt = item.added_at
-                    ? new Date(item.added_at.seconds * 1000).toLocaleString()
+                    ? new Date(item.added_at).toLocaleString()
                     : "N/A";
                   const updatedAt = item.updated_at
-                    ? new Date(item.updated_at.seconds * 1000).toLocaleString()
+                    ? new Date(item.added_at).toLocaleString()
                     : "N/A";
 
                   const priceClass =
