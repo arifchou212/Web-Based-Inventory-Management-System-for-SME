@@ -89,14 +89,12 @@ SMTP_PORT=465
 
 Used to sign and verify JWT tokens in the backend.
 
-Generate a secure token using one of these:
+Generate a secure token by copying this in the terminal:
 
 ```bash
 # Python
 python -c "import secrets; print(secrets.token_hex(32))"
 
-# Node.js
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 Paste the result into your `.env`:
@@ -131,14 +129,51 @@ SMTP_PORT=465
 ```env
 REACT_APP_API_BASE_URL=http://127.0.0.1:5000/api
 ```
+---
 
-(If using Vite instead of Create React App, use `VITE_BACKEND_URL` instead.)
+## 🔥 Firebase Setup for Frontend
+
+To connect the React app to Firebase, you need to configure it with your Firebase web credentials.
 
 ---
 
+### ✅ 1. Create a Firebase Project
+
+1. Visit [https://console.firebase.google.com](https://console.firebase.google.com)
+2. Click **“Add Project”** and follow the steps
+3. In project overview, navigate to you project, then authentication, then go to sign-in methods
+3. Enable Email/Password Authentication and Google sign-in
+4. Create Firestore Database (in test mode or secure rules mode)
+---
+
+### ✅ 2. Register a Web App
+
+1. Inside the Firebase dashboard → ⚙️ **Project Settings**
+2. Scroll to **"Your apps"** and click the **</> (Web)** icon
+3. Name your app (e.g., `InventoryFrontend`)
+4. In the terminal run 
+```npm install firebase```
+4. Firebase will also give you a config object like this:
+
+```js
+const firebaseConfig = {
+  apiKey: "AIzaSyExampleKey",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:exampleid",
+  measurementId: "G-EXAMPLEID"
+};
+```
+5. Inside frontend/src/firebase.js, replace the firebaseConfig in the firebase.js with the newly generated const firebaseConfig firebase just gave
+
+---
+
+
 ### 3. `firebase_config.json` in **backend folder**
 
-This is the Firebase Admin SDK private key used by Flask to communicate with Firebase securely.
+This is the Firebase Admin SDK private key used by Flask to communicate with Firebase securely. 
 
 📥 **To generate it:**
 
@@ -156,73 +191,22 @@ inventory-project/backend/firebase_config.json
 
 ---
 
-## 🔥 Firebase Setup for Frontend
 
-To connect the React app to Firebase, you need to configure it with your Firebase web credentials.
-
----
-
-### ✅ 1. Create a Firebase Project
-
-1. Visit [https://console.firebase.google.com](https://console.firebase.google.com)
-2. Click **“Add Project”** and follow the steps
-3. Enable Email/Password Authentication and Google sign-in
-4. Create Firestore Database (in test mode or secure rules mode)
----
-
-### ✅ 2. Register a Web App
-
-1. Inside the Firebase dashboard → ⚙️ **Project Settings**
-2. Scroll to **"Your apps"** and click the **</> (Web)** icon
-3. Name your app (e.g., `InventoryFrontend`)
-4. Firebase will give you a config object like this:
-
-```js
-const firebaseConfig = {
-  apiKey: "AIzaSyExampleKey",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:exampleid",
-  measurementId: "G-EXAMPLEID"
-};
-```
-
-
----
-
-### ✅ 3. Add the config to your `.env` in `frontend/`
-
-```env
-VITE_FIREBASE_API_KEY=AIzaSyExampleKey
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-VITE_FIREBASE_APP_ID=1:123456789:web:exampleid
-VITE_FIREBASE_MEASUREMENT_ID=G-EXAMPLEID
-```
-
-✅ These values are public by design and safe to expose on the frontend.
-
----
-
-## 🧩 2. Run the Backend (Flask)
+## 🧩  Run the Backend (Flask)
 
 ```bash
 cd backend
 python -m venv venv
 source venv/bin/activate       # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-python app.py
+python app.py # make sure python interpretor is set to python 3.11.5
 ```
 
 🟢 Backend runs at: `http://localhost:5000`
 
 ---
 
-## 🖼️ 3. Run the Frontend (React)
+## 🖼️ Run the Frontend (React)
 
 ```bash
 cd frontend
