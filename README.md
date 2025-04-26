@@ -54,7 +54,6 @@ Python 3.11.5           # For running the backend
 Firebase CLI          # (Optional) For Firebase functions
 ```
 
----
 
 ## 🔧 1. Clone the Repository
 
@@ -189,6 +188,7 @@ const firebaseConfig = {
   measurementId: "G-EXAMPLEID"
 };
 ```
+
 
 ---
 
