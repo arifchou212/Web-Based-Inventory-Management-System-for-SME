@@ -167,7 +167,18 @@ const firebaseConfig = {
 };
 ```
 5. Inside frontend/src/firebase.js, replace the firebaseConfig in the firebase.js with the newly generated const firebaseConfig firebase just gave
+6. For testing purposes, change the firebase rules to this:
+```
+rules_version = '2';
 
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
 ---
 
 
