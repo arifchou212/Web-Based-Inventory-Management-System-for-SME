@@ -1,5 +1,4 @@
-
-# Web-Based Inventory Management System for Small Business
+# Web-Based Inventory Management System for Small Businesses
 
 A full-stack inventory management system using:
 
@@ -51,7 +50,7 @@ Make sure the following tools are installed on your machine:
 
 ```bash
 Node.js & npm         # For running the frontend
-Python 3.8+           # For running the backend
+Python 3.11.5           # For running the backend
 Firebase CLI          # (Optional) For Firebase functions
 ```
 
@@ -168,7 +167,8 @@ To connect the React app to Firebase, you need to configure it with your Firebas
 
 1. Visit [https://console.firebase.google.com](https://console.firebase.google.com)
 2. Click **“Add Project”** and follow the steps
-
+3. Enable Email/Password Authentication and Google sign-in
+4. Create Firestore Database (in test mode or secure rules mode)
 ---
 
 ### ✅ 2. Register a Web App
@@ -236,7 +236,7 @@ Make sure the backend is running before accessing the frontend.
 
 ---
 
-## 🔥 4. (Optional) Run Firebase Functions
+## 🔥 4. (Optional, might not need) Run Firebase Functions
 
 If you're using Firebase Cloud Functions:
 
@@ -289,15 +289,5 @@ Thumbs.db
 
 ---
 
-## 📃 License
-
-MIT
-
----
-
-## 🙌 Contributing
-
-Pull requests are welcome. For significant changes, open an issue to discuss the idea first.
-```
 
 ---
