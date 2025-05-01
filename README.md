@@ -1,8 +1,5 @@
 # Web-Based Inventory Management System for Small Businesses
 
-
-Dissertation is located at route ac896/Dissertation
-
 A full-stack inventory management system using:
 
 - ⚛️ React (Frontend)
@@ -12,6 +9,11 @@ A full-stack inventory management system using:
 Built for small businesses to manage inventory, users, and analytics with ease.
 
 ---
+
+## Location of Dissertation
+Dissertation is located at route ac896/Dissertation.docx
+
+
 
 ## 📁 Project Structure
 ```
