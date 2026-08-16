@@ -1,13 +1,10 @@
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
 import os
+import json
 
-# Get the absolute path of the file
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CREDENTIALS_PATH = os.path.join(BASE_DIR, "firebase_admin.json")
-
-# Load Firebase credentials
-cred = credentials.Certificate(CREDENTIALS_PATH)
+firebase_creds = json.loads(os.environ["FIREBASE_CREDENTIALS"])
+cred = credentials.Certificate(firebase_creds)
 firebase_admin.initialize_app(cred)
 
 # Firestore Database
