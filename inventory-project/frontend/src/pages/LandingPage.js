@@ -20,9 +20,6 @@ const LandingPage = () => {
               bulk uploads, and secure role-based management.
             </p>
             <div className="hero-buttons">
-              <Link to="/demo" className="btn btn-primary-hero">
-                Get a Free Demo
-              </Link>
               <Link to="/auth" className="btn btn-outline-hero">
                 Sign Up
               </Link>
