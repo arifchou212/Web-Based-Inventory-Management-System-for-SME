@@ -10,10 +10,6 @@ Built for small businesses to manage inventory, users, and analytics with ease.
 
 ---
 
-## Location of Dissertation
-Dissertation is located at route ac896/Dissertation.docx
-
-
 
 ##  Project Structure
 ```
@@ -63,8 +59,8 @@ Firebase CLI          # (Optional) For Firebase functions
 ##  1. Clone the Repository
 
 ```bash
-git clone https://campus.cs.le.ac.uk/gitlab/ug_project/24-25/ac896.git
-cd ac896/inventory-project
+git clone https://github.com/arifchou212/Web-Based-Inventory-Management-System-for-SME.git
+cd Web-Based-Inventory-Management-System-for-SME/inventory-project
 ```
 
 ---
@@ -287,7 +283,3 @@ Thumbs.db
 .idea/
 ```
 
----
-
-
----
