@@ -10,6 +10,9 @@ Built for small businesses to manage inventory, users, and analytics with ease.
 
 ---
 
+## Live Demo
+Frontend: https://web-based-inventory-management-syst.vercel.app
+
 
 ##  Project Structure
 ```
