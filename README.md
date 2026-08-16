@@ -2,9 +2,9 @@
 
 A full-stack inventory management system using:
 
-- ⚛️ React (Frontend)
-- 🐍 Flask (Backend)
-- 🔥 Firebase (Authentication + Database)
+-  React (Frontend)
+-  Flask (Backend)
+-  Firebase (Authentication + Database)
 
 Built for small businesses to manage inventory, users, and analytics with ease.
 
@@ -15,7 +15,7 @@ Dissertation is located at route ac896/Dissertation.docx
 
 
 
-## 📁 Project Structure
+##  Project Structure
 ```
 inventory-project/
 ├── backend/                  # Flask API
@@ -49,7 +49,7 @@ inventory-project/
 
 ---
 
-## ✅ Prerequisites
+##  Prerequisites
 
 Make sure the following tools are installed on your machine:
 
@@ -60,7 +60,7 @@ Firebase CLI          # (Optional) For Firebase functions
 ```
 
 
-## 🔧 1. Clone the Repository
+##  1. Clone the Repository
 
 ```bash
 git clone https://campus.cs.le.ac.uk/gitlab/ug_project/24-25/ac896.git
@@ -69,7 +69,7 @@ cd ac896/inventory-project
 
 ---
 
-## ⚙️ Environment Variables Setup
+##  Environment Variables Setup
 
 To run the project, you must create the following config files manually (they are ignored by Git for security reasons):
 
@@ -88,9 +88,9 @@ SMTP_PORT=465
 
 ---
 
-### 🛠️ How to Set Missing Secrets
+### How to Set Missing Secrets
 
-#### 🔑 `JWT_SECRET`
+####  `JWT_SECRET`
 
 Used to sign and verify JWT tokens in the backend.
 
@@ -110,9 +110,9 @@ JWT_SECRET=your_generated_secret_here
 
 ---
 
-#### 📬 `SMTP_PASSWORD` (Gmail Users)
+####  `SMTP_PASSWORD` (Gmail Users)
 
-> ⚠️ **Do NOT use your real Gmail password** — use a generated **App Password**.
+>  **Do NOT use your real Gmail password** — use a generated **App Password**.
 
 1. Visit [https://myaccount.google.com/security](https://myaccount.google.com/security)
 2. Enable **2-Step Verification**
@@ -136,13 +136,13 @@ REACT_APP_API_BASE_URL=http://127.0.0.1:5000/api
 ```
 ---
 
-## 🔥 Firebase Setup for Frontend
+##  Firebase Setup for Frontend
 
 To connect the React app to Firebase, you need to configure it with your Firebase web credentials.
 
 ---
 
-### ✅ 1. Create a Firebase Project
+###  1. Create a Firebase Project
 
 1. Visit [https://console.firebase.google.com](https://console.firebase.google.com)
 2. Click **“Add Project”** and follow the steps
@@ -151,7 +151,7 @@ To connect the React app to Firebase, you need to configure it with your Firebas
 4. Create Firestore Database (in test mode or secure rules mode)
 ---
 
-### ✅ 2. Register a Web App
+###  2. Register a Web App
 
 1. Inside the Firebase dashboard → ⚙️ **Project Settings**
 2. Scroll to **"Your apps"** and click the **</> (Web)** icon
@@ -191,7 +191,7 @@ service cloud.firestore {
 
 This is the Firebase Admin SDK private key used by Flask to communicate with Firebase securely. 
 
-📥 **To generate it:**
+ **To generate it:**
 
 1. Go to [https://console.firebase.google.com](https://console.firebase.google.com)
 2. Open your project → ⚙️ Project Settings → Service Accounts
@@ -203,12 +203,12 @@ This is the Firebase Admin SDK private key used by Flask to communicate with Fir
 inventory-project/backend/firebase_config.json
 ```
 
-⚠️ **DO NOT commit this file.**
+ **DO NOT commit this file.**
 
 ---
 
 
-## 🧩  Run the Backend (Flask)
+##   Run the Backend (Flask)
 
 ```bash
 cd backend
@@ -218,11 +218,11 @@ pip install -r requirements.txt
 python app.py # make sure python interpretor is set to python 3.11.5
 ```
 
-🟢 Backend runs at: `http://localhost:5000`
+ Backend runs at: `http://localhost:5000`
 
 ---
 
-## 🖼️ Run the Frontend (React)
+##  Run the Frontend (React)
 
 ```bash
 cd frontend
@@ -230,13 +230,13 @@ npm install
 npm start
 ```
 
-🟢 Frontend runs at: `http://localhost:3000`
+ Frontend runs at: `http://localhost:3000`
 
 Make sure the backend is running before accessing the frontend.
 
 ---
 
-## 🔥 4. (Optional, might not need) Run Firebase Functions
+##  4. (Optional, might not need) Run Firebase Functions
 
 If you're using Firebase Cloud Functions:
 
@@ -250,18 +250,18 @@ You must have the Firebase CLI installed and `firebase.json` configured properly
 
 ---
 
-## ✅ Features
+##  Features
 
-- 🔐 Authentication (Email & Google)
-- 📦 Inventory Management (Add, Edit, Delete)
-- 📁 CSV Upload with Validation
-- 📊 Reports & Graphs (Trends, Stock Levels)
-- 📬 Email Verification & Logging
-- 🧑‍💼 Role-Based Dashboard (Admin, Staff)
+-  Authentication (Email & Google)
+-  Inventory Management (Add, Edit, Delete)
+-  CSV Upload with Validation
+-  Reports & Graphs (Trends, Stock Levels)
+-  Email Verification & Logging
+-  Role-Based Dashboard (Admin, Staff)
 
 ---
 
-## 🛡️ What NOT to Commit
+##  What NOT to Commit
 
 The following should be excluded using `.gitignore`:
 
