@@ -260,9 +260,11 @@ def signup():
         user_record = auth.create_user(email=email, password=password)
         uid = user_record.uid
         
-        verification_link = auth.generate_email_verification_link(email)
-
-        send_verification_email(to_email=email, verification_link=verification_link)
+        try:
+            verification_link = auth.generate_email_verification_link(email)
+            send_verification_email(to_email=email, verification_link=verification_link)
+        except Exception as e:
+            print("Warning: verification email failed:", str(e))
 
         found_data, found_company = find_user_in_any_company(uid)
         if found_data:
