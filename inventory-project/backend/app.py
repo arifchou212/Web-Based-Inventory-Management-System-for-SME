@@ -78,7 +78,7 @@ def validate_password(password):
 def send_verification_email(to_email, verification_link):
     api_key = os.getenv("BREVO_API_KEY")
     if not api_key:
-        print("❌ Missing BREVO_API_KEY")
+        print("Missing BREVO_API_KEY")
         return
 
     url = "https://api.brevo.com/v3/smtp/email"
@@ -88,7 +88,7 @@ def send_verification_email(to_email, verification_link):
         "content-type": "application/json"
     }
     payload = {
-        "sender": {"name": "Inventory Management", "email": "your_verified_sender@email.com"},
+        "sender": {"name": "Inventory Management", "email": "arifchoudhury2839@gmail.com"},
         "to": [{"email": to_email}],
         "subject": "Verify Your Email",
         "htmlContent": f"<p>Click below to verify your email address:</p><p><a href='{verification_link}'>{verification_link}</a></p>"
@@ -97,33 +97,31 @@ def send_verification_email(to_email, verification_link):
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         response.raise_for_status()
-        print("✅ Verification email sent successfully!")
+        print(" Verification email sent successfully!")
     except Exception as e:
-        print(f"❌ Error sending email: {e}")
+        print(f" Error sending email: {e}")
         
         
 def send_forgot_password_email(to_email, reset_link):
-    """New function to send Forgot Password email using the same SMTP settings."""
-    sender_email = os.getenv("SMTP_EMAIL")
-    sender_password = os.getenv("SMTP_PASSWORD")
-
-    subject = "Reset Your Password"
-    body = f"""
-    <p>You requested a password reset. Click below to reset your password:</p>
-    <p><a href="{reset_link}">{reset_link}</a></p>
-    <p>If you did not request this, you can safely ignore this email.</p>
-    """
-
-    msg = MIMEText(body, "html")
-    msg["Subject"] = subject
-    msg["From"] = sender_email
-    msg["To"] = to_email
-
+    api_key = os.getenv("BREVO_API_KEY")
+    if not api_key:
+        print("Missing BREVO_API_KEY")
+        return
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json"
+    }
+    payload = {
+        "sender": {"name": "Inventory Management", "email": "arifchoudhury2839@gmail.com"},
+        "to": [{"email": to_email}],
+        "subject": "Reset Your Password",
+        "htmlContent": f"<p>You requested a password reset. Click below to reset your password:</p><p><a href='{reset_link}'>{reset_link}</a></p>"
+    }
     try:
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        server.login(sender_email, sender_password)
-        server.send_message(msg)
-        server.quit()
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
         print("✅ Forgot Password email sent successfully!")
     except Exception as e:
         print(f"❌ Error sending Forgot Password email: {e}")
