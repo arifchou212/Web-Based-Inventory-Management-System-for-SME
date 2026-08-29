@@ -3,6 +3,7 @@ import axios from 'axios';
 import { getAuth, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { FaUserShield, FaTrash } from 'react-icons/fa';
 import "../styles/ManageUsersPage.css";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 const ManageUsersPage = () => {
   const [users, setUsers]     = useState([]);
@@ -18,7 +19,7 @@ const ManageUsersPage = () => {
   async function fetchUsers() {
     try {
       const idToken = await getAuth().currentUser.getIdToken();
-      const res = await axios.get('/api/users', {
+      const res = await axios.get(`${API_BASE_URL}/users`, {
         headers: {
           Authorization: `Bearer ${idToken}`,
            companyName
@@ -43,7 +44,7 @@ const ManageUsersPage = () => {
     try {
       await reauthenticateWithCredential(user, cred);
     } catch {
-      return alert('❌ Password incorrect — action aborted.');
+      return alert('Password incorrect — action aborted.');
     }
 
     // fresh ID token
@@ -51,16 +52,16 @@ const ManageUsersPage = () => {
 
     try {
       await actionFn(idToken);
-      alert('✅ Action completed successfully.');
+      alert('Action completed successfully.');
       fetchUsers();
     } catch (err) {
-      alert('❌ Failed: ' + (err.response?.data?.error || err.message));
+      alert('Failed: ' + (err.response?.data?.error || err.message));
     }
   }
 
   const handlePromote = (targetUid) => {
     withReauthAndApi(idToken =>
-      axios.put(`/api/users/${targetUid}/promote`, {}, {
+      axios.put(`${API_BASE_URL}/users/${targetUid}/promote`, {}, {
         headers: { Authorization: `Bearer ${idToken}`, companyName }
       })
     );
@@ -68,7 +69,7 @@ const ManageUsersPage = () => {
 
   const handleDemote = (targetUid) => {
     withReauthAndApi(idToken =>
-      axios.put(`/api/users/${targetUid}/demote`, {}, {
+      axios.put(`${API_BASE_URL}/users/${targetUid}/demote`, {}, {
         headers: { Authorization: `Bearer ${idToken}`, companyName }
       })
     );
@@ -76,7 +77,7 @@ const ManageUsersPage = () => {
 
   const handleRemove = (targetUid) => {
     withReauthAndApi(idToken =>
-      axios.delete(`/api/users/${targetUid}/remove`, {
+      axios.delete(`${API_BASE_URL}/users/${targetUid}/remove`, {
         headers: { Authorization: `Bearer ${idToken}`, companyName }
       })
     );
