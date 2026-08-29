@@ -11,7 +11,17 @@ Built for small businesses to manage inventory, users, and analytics with ease.
 ---
 
 ## Live Demo
-Frontend: https://web-based-inventory-management-syst.vercel.app
+https://web-based-inventory-management-syst.vercel.app
+
+<img width="752" height="356" alt="image" src="https://github.com/user-attachments/assets/b8915ee0-a085-4d81-856c-a43e768d9cf2" />
+
+<img width="750" height="342" alt="image" src="https://github.com/user-attachments/assets/718f2ac5-ec0c-48b1-8c22-241ca1336e77" />
+
+<img width="755" height="342" alt="image" src="https://github.com/user-attachments/assets/760215fa-f4df-4e19-afc3-466f21be8578" />
+
+
+<img width="752" height="346" alt="image" src="https://github.com/user-attachments/assets/e8e62712-c100-4f9b-92a7-0ba77748560b" />
+
 
 
 ##  Project Structure
