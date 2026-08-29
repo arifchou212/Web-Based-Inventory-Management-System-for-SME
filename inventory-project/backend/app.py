@@ -12,6 +12,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from twilio.rest import Client
 from google.cloud.firestore_v1 import DocumentSnapshot
+import requests
 
 import firebase_admin
 from firebase_admin import credentials, auth, firestore
@@ -75,39 +76,27 @@ def validate_password(password):
 # Email Utilities
 # --------------------------------------------------------------------------------
 def send_verification_email(to_email, verification_link):
-    sender_email = os.getenv("SMTP_EMAIL")  
-    sender_password = os.getenv("SMTP_PASSWORD")  
-    smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")  # Default to Gmail
-    smtp_port = int(os.getenv("SMTP_PORT", 465))  
-
-    if not sender_email or not sender_password:
-        print("❌ Error: Missing SMTP credentials. Check your .env file.")
+    api_key = os.getenv("BREVO_API_KEY")
+    if not api_key:
+        print("❌ Missing BREVO_API_KEY")
         return
 
-    subject = "Verify Your Email"
-    body = f"""
-    Hello,
-
-    Click the link below to verify your email address:
-
-    {verification_link}
-
-    If you did not request this, you can safely ignore this email.
-
-    Thanks,
-    Inventory Management Team
-    """
-
-    msg = MIMEText(body)
-    msg["From"] = sender_email
-    msg["To"] = to_email
-    msg["Subject"] = subject
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "api-key": api_key,
+        "content-type": "application/json"
+    }
+    payload = {
+        "sender": {"name": "Inventory Management", "email": "your_verified_sender@email.com"},
+        "to": [{"email": to_email}],
+        "subject": "Verify Your Email",
+        "htmlContent": f"<p>Click below to verify your email address:</p><p><a href='{verification_link}'>{verification_link}</a></p>"
+    }
 
     try:
-        server = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, to_email, msg.as_string())
-        server.quit()
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
         print("✅ Verification email sent successfully!")
     except Exception as e:
         print(f"❌ Error sending email: {e}")
